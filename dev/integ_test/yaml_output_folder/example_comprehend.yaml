@@ -1,0 +1,114 @@
+example_comprehend:
+  dag_id: example_comprehend
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    create_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-comprehend
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_bucket
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    upload_sample_data:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
+      aws_conn_id: aws_default
+      data: '{"username": "bob1234", "name": "Bob", "sex": "M", "address": "1773 Raymond
+        Ville Suite 682", "mail": "test@hotmail.com"}'
+      encrypt: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replace: false
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: test-comprehend
+      s3_key: start-pii-entities-detection-job/sample_data.txt
+      task_id: upload_sample_data
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - create_bucket
+    delete_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-comprehend
+      force_delete: true
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_bucket
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies:
+      - await_start_pii_entities_detection_job
+    start_pii_entities_detection_job:
+      operator: airflow.providers.amazon.aws.operators.comprehend.ComprehendStartPiiEntitiesDetectionJobOperator
+      aws_conn_id: aws_default
+      data_access_role_arn: test
+      deferrable: false
+      input_data_config:
+        S3Uri: s3://test-comprehend/start-pii-entities-detection-job/sample_data.txt
+        InputFormat: ONE_DOC_PER_LINE
+      language_code: en
+      mode: ONLY_REDACTION
+      outlets: []
+      output_data_config:
+        S3Uri: s3://test-comprehend/redacted_output/
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      start_pii_entities_kwargs:
+        RedactionConfig:
+          PiiEntityTypes:
+          - NAME
+          - ADDRESS
+          MaskMode: REPLACE_WITH_PII_ENTITY_TYPE
+      task_id: start_pii_entities_detection_job
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 20
+      dependencies:
+      - upload_sample_data
+    await_start_pii_entities_detection_job:
+      operator: airflow.providers.amazon.aws.sensors.comprehend.ComprehendStartPiiEntitiesDetectionJobCompletedSensor
+      aws_conn_id: aws_default
+      deferrable: false
+      job_id: '{{ task_instance.xcom_pull(task_ids=''start_pii_entities_detection_job'',
+        key=''return_value'') }}'
+      max_retries: 75
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 120
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: await_start_pii_entities_detection_job
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - start_pii_entities_detection_job
+  catchup: true
+  max_active_runs: 16
+  max_active_tasks: 16
+  max_consecutive_failed_dag_runs: 0

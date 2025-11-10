@@ -1,0 +1,129 @@
+example_bedrock_batch_inference:
+  dag_id: example_bedrock_batch_inference
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    invoke_claude_messages:
+      operator: airflow.providers.amazon.aws.operators.bedrock.BedrockInvokeModelOperator
+      aws_conn_id: aws_default
+      input_data:
+        anthropic_version: bedrock-2023-05-31
+        max_tokens: 1000
+        messages: [{role: user, content: 'Even numbers are red. Odd numbers are blue.
+              What color is 42?'}]
+      model_id: anthropic.claude-3-sonnet-20240229-v1:0
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: invoke_claude_messages
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    create_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-bedrock
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_bucket
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [invoke_claude_messages]
+    batch_infer:
+      operator: airflow.providers.amazon.aws.operators.bedrock.BedrockBatchInferenceOperator
+      aws_conn_id: aws_default
+      deferrable: false
+      input_uri: s3://test-bedrock/test/prompt_list.jsonl
+      invoke_kwargs: {}
+      job_name: batch-infer-test
+      model_id: anthropic.claude-3-sonnet-20240229-v1:0
+      outlets: []
+      output_uri: s3://test-bedrock/output/
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      role_arn: test
+      task_id: batch_infer
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 20
+      dependencies: [generate_prompts]
+    await_job_scheduled:
+      operator: airflow.providers.amazon.aws.sensors.bedrock.BedrockBatchInferenceSensor
+      aws_conn_id: aws_default
+      deferrable: false
+      job_arn: '{{ task_instance.xcom_pull(task_ids=''batch_infer'', key=''return_value'')
+        }}'
+      max_retries: 75
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 120
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      success_state: scheduled
+      task_id: await_job_scheduled
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [batch_infer]
+    stop_batch_inference:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_bedrock_batch_inference.stop_batch_inference
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: stop_batch_inference
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [await_job_scheduled, batch_infer]
+      decorator: airflow.decorators.task
+      job_arn: +batch_infer
+    delete_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-bedrock
+      force_delete: true
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_bucket
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [stop_batch_inference]
+    generate_prompts:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_bedrock_batch_inference.generate_prompts
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: generate_prompts
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_bucket]
+      decorator: airflow.decorators.task
+      _env_id: test
+      _bucket: test-bedrock
+      _key: test/prompt_list.jsonl

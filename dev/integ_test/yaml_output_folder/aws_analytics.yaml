@@ -1,0 +1,92 @@
+aws_analytics:
+  dag_id: aws_analytics
+  params: {}
+  default_args:
+    owner: airflow
+    start_date: '2026-01-01'
+    retries: 1
+    retry_delay: 300.0
+  schedule: '@hourly'
+  tasks:
+    create_bucket_analytics-reports:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: analytics-reports
+      outlets: []
+      params: {}
+      priority_weight: 1
+      region_name: us-west-2
+      retries: 1
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_bucket_analytics-reports
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    create_file_analytics-reports_reports_daily.json:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
+      aws_conn_id: aws_default
+      data: '{"status":"ok"}'
+      encrypt: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replace: true
+      retries: 1
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: analytics-reports
+      s3_key: reports/daily.json
+      task_id: create_file_analytics-reports_reports_daily.json
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - create_bucket_analytics-reports
+    list_analytics-reports:
+      operator: airflow.providers.amazon.aws.operators.s3.S3ListOperator
+      apply_wildcard: false
+      aws_conn_id: aws_default
+      bucket: analytics-reports
+      delimiter: ''
+      outlets: []
+      params: {}
+      prefix: ''
+      priority_weight: 1
+      retries: 1
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: list_analytics-reports
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - create_file_analytics-reports_reports_daily.json
+    sense_analytics-reports_reports_daily.json:
+      operator: airflow.providers.amazon.aws.sensors.s3.S3KeySensor
+      aws_conn_id: aws_default
+      bucket_key: reports/daily.json
+      bucket_name: analytics-reports
+      deferrable: false
+      metadata_keys:
+      - Size
+      - Key
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 30
+      priority_weight: 1
+      retries: 1
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: sense_analytics-reports_reports_daily.json
+      timeout: 300
+      trigger_rule: all_success
+      use_regex: false
+      wait_for_downstream: false
+      wildcard_match: false
+      dependencies:
+      - list_analytics-reports
+  catchup: true
+  description: Dynamically generated AWS DAG for analytics
+  max_active_runs: 16
+  max_active_tasks: 16
+  max_consecutive_failed_dag_runs: 0

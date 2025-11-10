@@ -1,0 +1,88 @@
+example_step_functions:
+  dag_id: example_step_functions
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    create_state_machine:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_step_functions.create_state_machine
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_state_machine
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      decorator: airflow.decorators.task
+      env_id: test
+      role_arn: test-role-arn
+    start_execution:
+      operator: airflow.providers.amazon.aws.operators.step_function.StepFunctionStartExecutionOperator
+      aws_conn_id: aws_default
+      deferrable: false
+      is_redrive_execution: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      state_machine_arn: '{{ task_instance.xcom_pull(task_ids=''create_state_machine'',
+        key=''return_value'') }}'
+      task_id: start_execution
+      trigger_rule: all_success
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 30
+      dependencies: [create_state_machine]
+    wait_for_execution:
+      operator: airflow.providers.amazon.aws.sensors.step_function.StepFunctionExecutionSensor
+      aws_conn_id: aws_default
+      execution_arn: '{{ task_instance.xcom_pull(task_ids=''start_execution'', key=''return_value'')
+        }}'
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 1
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: wait_for_execution
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [start_execution]
+    get_execution_output:
+      operator: airflow.providers.amazon.aws.operators.step_function.StepFunctionGetExecutionOutputOperator
+      aws_conn_id: aws_default
+      execution_arn: '{{ task_instance.xcom_pull(task_ids=''start_execution'', key=''return_value'')
+        }}'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: get_execution_output
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [start_execution, wait_for_execution]
+    delete_state_machine:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_step_functions.delete_state_machine
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_state_machine
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_state_machine, get_execution_output]
+      decorator: airflow.decorators.task
+      state_machine_arn: +create_state_machine

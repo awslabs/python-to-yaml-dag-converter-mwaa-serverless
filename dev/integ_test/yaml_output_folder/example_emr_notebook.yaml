@@ -1,0 +1,144 @@
+example_emr_notebook:
+  dag_id: example_emr_notebook
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    start_execution:
+      operator: airflow.providers.amazon.aws.operators.emr.EmrStartNotebookExecutionOperator
+      aws_conn_id: aws_default
+      cluster_id: test-cluster-id
+      editor_id: test-editor-id
+      notebook_execution_name: emr_notebook_0e0aef9c-85b2-4ab8-90d6-b4986f477f38
+      notebook_instance_security_group_id: ''
+      notebook_params: ''
+      outlets: []
+      params: {}
+      priority_weight: 1
+      relative_path: EMR-System-Test.ipynb
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      service_role: EMR_Notebooks_DefaultRole
+      tags: []
+      task_id: start_execution
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 25
+      dependencies: []
+    wait_for_execution_start:
+      operator: airflow.providers.amazon.aws.sensors.emr.EmrNotebookExecutionSensor
+      aws_conn_id: aws_default
+      failed_states: '{''FAILED''}'
+      mode: poke
+      notebook_execution_id: '{{ task_instance.xcom_pull(task_ids=''start_execution'',
+        key=''return_value'') }}'
+      outlets: []
+      params: {}
+      poke_interval: 5
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      target_states: '{''RUNNING''}'
+      task_id: wait_for_execution_start
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - start_execution
+    stop_execution:
+      operator: airflow.providers.amazon.aws.operators.emr.EmrStopNotebookExecutionOperator
+      aws_conn_id: aws_default
+      notebook_execution_id: '{{ task_instance.xcom_pull(task_ids=''start_execution'',
+        key=''return_value'') }}'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: stop_execution
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 25
+      dependencies:
+      - start_execution
+      - wait_for_execution_start
+    wait_for_execution_stop:
+      operator: airflow.providers.amazon.aws.sensors.emr.EmrNotebookExecutionSensor
+      aws_conn_id: aws_default
+      failed_states: '{''FAILED''}'
+      mode: poke
+      notebook_execution_id: '{{ task_instance.xcom_pull(task_ids=''start_execution'',
+        key=''return_value'') }}'
+      outlets: []
+      params: {}
+      poke_interval: 5
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      target_states: '{''STOPPED''}'
+      task_id: wait_for_execution_stop
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - start_execution
+      - stop_execution
+    finish_execution:
+      operator: airflow.providers.amazon.aws.operators.emr.EmrStartNotebookExecutionOperator
+      aws_conn_id: aws_default
+      cluster_id: test-cluster-id
+      editor_id: test-editor-id
+      notebook_execution_name: emr_notebook_4670dc24-708b-4b3b-8ae1-fd7d54616387
+      notebook_instance_security_group_id: ''
+      notebook_params: ''
+      outlets: []
+      params: {}
+      priority_weight: 1
+      relative_path: EMR-System-Test.ipynb
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      service_role: EMR_Notebooks_DefaultRole
+      tags: []
+      task_id: finish_execution
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 25
+      dependencies:
+      - wait_for_execution_stop
+    wait_for_execution_finish:
+      operator: airflow.providers.amazon.aws.sensors.emr.EmrNotebookExecutionSensor
+      aws_conn_id: aws_default
+      failed_states: '{''FAILED''}'
+      mode: poke
+      notebook_execution_id: '{{ task_instance.xcom_pull(task_ids=''finish_execution'',
+        key=''return_value'') }}'
+      outlets: []
+      params: {}
+      poke_interval: 5
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      target_states: '{''FINISHED''}'
+      task_id: wait_for_execution_finish
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - finish_execution
+  catchup: true
+  max_active_runs: 16
+  max_active_tasks: 16
+  max_consecutive_failed_dag_runs: 0

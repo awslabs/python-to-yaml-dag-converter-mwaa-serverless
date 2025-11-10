@@ -1,0 +1,50 @@
+manual_dag:
+  dag_id: manual_dag
+  params: {}
+  default_args:
+    owner: airflow
+    start_date: '2026-01-01'
+  schedule: 0 0 * * ? *
+  tasks:
+    extract:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: taskflow_mwaa_1.extract
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: extract
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      decorator: airflow.decorators.task
+    transform:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: taskflow_mwaa_1.transform
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: transform
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [extract]
+      decorator: airflow.decorators.task
+      order_data_dict: +extract
+    load:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: taskflow_mwaa_1.load
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: load
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [transform]
+      decorator: airflow.decorators.task
+      total_order_value: '{{ task_instance.xcom_pull(task_ids=''transform'', key=''total_order_value'')
+        }}'

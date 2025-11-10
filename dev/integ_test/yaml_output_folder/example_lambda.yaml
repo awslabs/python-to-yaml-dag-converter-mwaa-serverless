@@ -1,0 +1,82 @@
+example_lambda:
+  dag_id: example_lambda
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    create_lambda_function:
+      operator: airflow.providers.amazon.aws.operators.lambda_function.LambdaCreateFunctionOperator
+      aws_conn_id: aws_default
+      code:
+        ZipFile: !!binary |
+          UEsDBBQAAAAAAAAAIQD/w7zLJQAAACUAAAASAAAAbGFtYmRhX2Z1bmN0aW9uLnB5CmRlZiB0ZXN0
+          KCphcmdzKToKICAgIHByaW50KCdIZWxsbycpClBLAQIUAxQAAAAAAAAAIQD/w7zLJQAAACUAAAAS
+          AAAAAAAAAAAAAAD/AQAAAABsYW1iZGFfZnVuY3Rpb24ucHlQSwUGAAAAAAEAAQBAAAAAVQAAAAAA
+      config: {}
+      deferrable: false
+      function_name: test-function
+      handler: lambda_function.test
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      role: test-role-arn
+      runtime: python3.9
+      task_id: create_lambda_function
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 15
+      waiter_max_attempts: 60
+      dependencies: []
+    wait_lambda_function_state:
+      operator: airflow.providers.amazon.aws.sensors.lambda_function.LambdaFunctionStateSensor
+      aws_conn_id: aws_default
+      function_name: test-function
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 1
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      target_states: [Active]
+      task_id: wait_lambda_function_state
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_lambda_function]
+    invoke_lambda_function:
+      operator: airflow.providers.amazon.aws.operators.lambda_function.LambdaInvokeFunctionOperator
+      aws_conn_id: aws_default
+      function_name: test-function
+      keep_empty_log_lines: true
+      outlets: []
+      params: {}
+      payload: '{"SampleEvent": {"SampleData": {"Name": "XYZ", "DoB": "1993-01-01"}}}'
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: invoke_lambda_function
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [wait_lambda_function_state]
+    delete_lambda:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_lambda.delete_lambda
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_lambda
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [invoke_lambda_function]
+      decorator: airflow.decorators.task
+      function_name: test-function

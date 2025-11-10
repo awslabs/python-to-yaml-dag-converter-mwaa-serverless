@@ -1,0 +1,117 @@
+example_sqs:
+  dag_id: example_sqs
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    create_queue:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_sqs.create_queue
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_queue
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      decorator: airflow.decorators.task
+      queue_name: test-example-queue
+    publish_to_queue_1:
+      operator: airflow.providers.amazon.aws.operators.sqs.SqsPublishOperator
+      aws_conn_id: aws_default
+      delay_seconds: 0
+      message_attributes: {}
+      message_content: '{{ task_instance }}'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      sqs_queue: '{{ task_instance.xcom_pull(task_ids=''create_queue'', key=''return_value'')
+        }}'
+      task_id: publish_to_queue_1
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_queue]
+    publish_to_queue_2:
+      operator: airflow.providers.amazon.aws.operators.sqs.SqsPublishOperator
+      aws_conn_id: aws_default
+      delay_seconds: 0
+      message_attributes: {}
+      message_content: '{{ task_instance }}'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      sqs_queue: '{{ task_instance.xcom_pull(task_ids=''create_queue'', key=''return_value'')
+        }}'
+      task_id: publish_to_queue_2
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [read_from_queue, create_queue]
+    read_from_queue:
+      operator: airflow.providers.amazon.aws.sensors.sqs.SqsSensor
+      aws_conn_id: aws_default
+      deferrable: false
+      delete_message_on_reception: true
+      max_messages: 5
+      mode: poke
+      num_batches: 1
+      outlets: []
+      params: {}
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      sqs_queue: '{{ task_instance.xcom_pull(task_ids=''create_queue'', key=''return_value'')
+        }}'
+      task_id: read_from_queue
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      wait_time_seconds: 1
+      dependencies: [publish_to_queue_1, create_queue]
+    read_from_queue_in_batch:
+      operator: airflow.providers.amazon.aws.sensors.sqs.SqsSensor
+      aws_conn_id: aws_default
+      deferrable: false
+      delete_message_on_reception: true
+      max_messages: 10
+      mode: poke
+      num_batches: 3
+      outlets: []
+      params: {}
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      sqs_queue: '{{ task_instance.xcom_pull(task_ids=''create_queue'', key=''return_value'')
+        }}'
+      task_id: read_from_queue_in_batch
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      wait_time_seconds: 1
+      dependencies: [publish_to_queue_2, create_queue]
+    delete_queue:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_sqs.delete_queue
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_queue
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [read_from_queue_in_batch, create_queue]
+      decorator: airflow.decorators.task
+      queue_url: +create_queue

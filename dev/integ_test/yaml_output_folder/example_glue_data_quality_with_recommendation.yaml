@@ -1,0 +1,271 @@
+example_glue_data_quality_with_recommendation:
+  dag_id: example_glue_data_quality_with_recommendation
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    create_s3_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-glue-dq-athena-bucket
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_s3_bucket
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    upload_sample_data:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
+      aws_conn_id: aws_default
+      data: |-
+        "Alice",20
+            "Bob",25
+            "Charlie",30
+      encrypt: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replace: true
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: test-glue-dq-athena-bucket
+      s3_key: test_test_glue_dq_table/airflow_sample.csv
+      task_id: upload_sample_data
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_s3_bucket]
+    create_database:
+      operator: airflow.providers.amazon.aws.operators.athena.AthenaOperator
+      aws_conn_id: aws_default
+      catalog: AwsDataCatalog
+      database: test_glue_dq_default
+      deferrable: false
+      log_query: true
+      max_polling_attempts: 999999
+      outlets: []
+      output_location: s3://test-glue-dq-athena-bucket/
+      params: {}
+      priority_weight: 1
+      query: CREATE DATABASE IF NOT EXISTS test_glue_dq_default
+      query_execution_context: {}
+      result_configuration: {}
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      sleep_time: 1
+      task_id: create_database
+      trigger_rule: all_success
+      wait_for_downstream: false
+      workgroup: primary
+      dependencies: [upload_sample_data]
+    create_table:
+      operator: airflow.providers.amazon.aws.operators.athena.AthenaOperator
+      aws_conn_id: aws_default
+      catalog: AwsDataCatalog
+      database: test_glue_dq_default
+      deferrable: false
+      log_query: true
+      max_polling_attempts: 999999
+      outlets: []
+      output_location: s3://test-glue-dq-athena-bucket/
+      params: {}
+      priority_weight: 1
+      query: "CREATE EXTERNAL TABLE IF NOT EXISTS test_glue_dq_default.test_test_glue_dq_table\n\
+        \            ( `name` string, `age` int )\n            ROW FORMAT SERDE \"\
+        org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe\"\n            WITH SERDEPROPERTIES\
+        \ ( \"serialization.format\" = \",\", \"field.delim\" = \",\" )\n        \
+        \    LOCATION \"s3://test-glue-dq-athena-bucket//test_test_glue_dq_table\"\
+        \n            TBLPROPERTIES (\"has_encrypted_data\"=\"false\")\n         \
+        \   "
+      query_execution_context: {}
+      result_configuration: {}
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      sleep_time: 1
+      task_id: create_table
+      trigger_rule: all_success
+      wait_for_downstream: false
+      workgroup: primary
+      dependencies: [create_database]
+    drop_table:
+      operator: airflow.providers.amazon.aws.operators.athena.AthenaOperator
+      aws_conn_id: aws_default
+      catalog: AwsDataCatalog
+      database: test_glue_dq_default
+      deferrable: false
+      log_query: true
+      max_polling_attempts: 999999
+      outlets: []
+      output_location: s3://test-glue-dq-athena-bucket/
+      params: {}
+      priority_weight: 1
+      query: DROP TABLE IF EXISTS test_glue_dq_default.test_test_glue_dq_table
+      query_execution_context: {}
+      result_configuration: {}
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      sleep_time: 1
+      task_id: drop_table
+      trigger_rule: all_done
+      wait_for_downstream: false
+      workgroup: primary
+      dependencies: [delete_ruleset]
+    drop_database:
+      operator: airflow.providers.amazon.aws.operators.athena.AthenaOperator
+      aws_conn_id: aws_default
+      catalog: AwsDataCatalog
+      database: test_glue_dq_default
+      deferrable: false
+      log_query: true
+      max_polling_attempts: 999999
+      outlets: []
+      output_location: s3://test-glue-dq-athena-bucket/
+      params: {}
+      priority_weight: 1
+      query: DROP DATABASE IF EXISTS test_glue_dq_default
+      query_execution_context: {}
+      result_configuration: {}
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      sleep_time: 1
+      task_id: drop_database
+      trigger_rule: all_done
+      wait_for_downstream: false
+      workgroup: primary
+      dependencies: [drop_table]
+    delete_s3_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-glue-dq-athena-bucket
+      force_delete: true
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_s3_bucket
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [drop_database]
+    recommendation_run:
+      operator: airflow.providers.amazon.aws.operators.glue.GlueDataQualityRuleRecommendationRunOperator
+      aws_conn_id: aws_default
+      datasource:
+        GlueTable:
+          TableName: test_test_glue_dq_table
+          DatabaseName: test_glue_dq_default
+      deferrable: false
+      number_of_workers: 5
+      outlets: []
+      params: {}
+      priority_weight: 1
+      recommendation_run_kwargs:
+        CreatedRulesetName: test-recommendation-ruleset
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      role: test-role-arn
+      show_results: true
+      task_id: recommendation_run
+      timeout: 2880
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 20
+      dependencies: [create_table]
+    await_recommendation_run_sensor:
+      operator: airflow.providers.amazon.aws.sensors.glue.GlueDataQualityRuleRecommendationRunSensor
+      aws_conn_id: aws_default
+      deferrable: false
+      max_retries: 60
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 120
+      priority_weight: 1
+      recommendation_run_id: '{{ task_instance.xcom_pull(task_ids=''recommendation_run'',
+        key=''return_value'') }}'
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      show_results: true
+      task_id: await_recommendation_run_sensor
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [recommendation_run]
+    start_evaluation_run:
+      operator: airflow.providers.amazon.aws.operators.glue.GlueDataQualityRuleSetEvaluationRunOperator
+      aws_conn_id: aws_default
+      datasource:
+        GlueTable:
+          TableName: test_test_glue_dq_table
+          DatabaseName: test_glue_dq_default
+      deferrable: false
+      number_of_workers: 5
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      role: test-role-arn
+      rule_set_evaluation_run_kwargs: {}
+      rule_set_names: [test-recommendation-ruleset]
+      show_results: true
+      task_id: start_evaluation_run
+      timeout: 2880
+      trigger_rule: all_success
+      verify_result_status: true
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 20
+      dependencies: [await_recommendation_run_sensor]
+    await_evaluation_run_sensor:
+      operator: airflow.providers.amazon.aws.sensors.glue.GlueDataQualityRuleSetEvaluationRunSensor
+      aws_conn_id: aws_default
+      deferrable: false
+      evaluation_run_id: '{{ task_instance.xcom_pull(task_ids=''start_evaluation_run'',
+        key=''return_value'') }}'
+      max_retries: 60
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 120
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      show_results: true
+      task_id: await_evaluation_run_sensor
+      timeout: 604800.0
+      trigger_rule: all_success
+      verify_result_status: true
+      wait_for_downstream: false
+      dependencies: [start_evaluation_run]
+    delete_ruleset:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_glue_data_quality_with_recommendation.delete_ruleset
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_ruleset
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [await_evaluation_run_sensor]
+      decorator: airflow.decorators.task
+      ruleset_name: test-recommendation-ruleset

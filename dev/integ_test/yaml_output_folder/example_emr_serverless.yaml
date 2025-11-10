@@ -1,0 +1,187 @@
+example_emr_serverless:
+  dag_id: example_emr_serverless
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    create_s3_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-emr-serverless-bucket
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_s3_bucket
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    create_emr_serverless_task:
+      operator: airflow.providers.amazon.aws.operators.emr.EmrServerlessCreateApplicationOperator
+      aws_conn_id: aws_default
+      client_request_token: e77c2911-e752-4a50-9839-f17aa4614b84
+      config:
+        name: new_application
+      deferrable: false
+      job_type: SPARK
+      outlets: []
+      params: {}
+      priority_weight: 1
+      release_label: emr-6.6.0
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_emr_serverless_task
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 25
+      dependencies:
+      - create_s3_bucket
+    wait_for_app_creation:
+      operator: airflow.providers.amazon.aws.sensors.emr.EmrServerlessApplicationSensor
+      application_id: '{{ task_instance.xcom_pull(task_ids=''create_emr_serverless_task'',
+        key=''return_value'') }}'
+      aws_conn_id: aws_default
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 1
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      target_states: frozenset({'CREATED', 'STARTED'})
+      task_id: wait_for_app_creation
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - create_emr_serverless_task
+    start_emr_serverless_job:
+      operator: airflow.providers.amazon.aws.operators.emr.EmrServerlessStartJobOperator
+      application_id: '{{ task_instance.xcom_pull(task_ids=''create_emr_serverless_task'',
+        key=''return_value'') }}'
+      aws_conn_id: aws_default
+      client_request_token: 71447125-ae99-473b-bbfc-68b676e46b2e
+      config: {}
+      configuration_overrides:
+        monitoringConfiguration:
+          s3MonitoringConfiguration:
+            logUri: s3://test-emr-serverless-bucket/logs
+      deferrable: false
+      enable_application_ui_links: false
+      execution_role_arn: test-role-arn
+      job_driver:
+        sparkSubmit:
+          entryPoint: s3://us-east-1.elasticmapreduce/emr-containers/samples/wordcount/scripts/wordcount.py
+          entryPointArguments:
+          - s3://test-emr-serverless-bucket/output
+          sparkSubmitParameters: --conf spark.executor.cores=1 --conf spark.executor.memory=4g                --conf
+            spark.driver.cores=1 --conf spark.driver.memory=4g --conf spark.executor.instances=1
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: start_emr_serverless_job
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 25
+      dependencies:
+      - create_emr_serverless_task
+      - wait_for_app_creation
+    wait_for_job:
+      operator: airflow.providers.amazon.aws.sensors.emr.EmrServerlessJobSensor
+      application_id: '{{ task_instance.xcom_pull(task_ids=''create_emr_serverless_task'',
+        key=''return_value'') }}'
+      aws_conn_id: aws_default
+      job_run_id: '{{ task_instance.xcom_pull(task_ids=''start_emr_serverless_job'',
+        key=''return_value'') }}'
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 10
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      target_states: '{''RUNNING'', ''SUCCESS''}'
+      task_id: wait_for_job
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - start_emr_serverless_job
+      - create_emr_serverless_task
+    stop_application:
+      operator: airflow.providers.amazon.aws.operators.emr.EmrServerlessStopApplicationOperator
+      application_id: '{{ task_instance.xcom_pull(task_ids=''create_emr_serverless_task'',
+        key=''return_value'') }}'
+      aws_conn_id: aws_default
+      deferrable: false
+      force_stop: true
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: stop_application
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 25
+      dependencies:
+      - wait_for_job
+      - create_emr_serverless_task
+    delete_application:
+      operator: airflow.providers.amazon.aws.operators.emr.EmrServerlessDeleteApplicationOperator
+      application_id: '{{ task_instance.xcom_pull(task_ids=''create_emr_serverless_task'',
+        key=''return_value'') }}'
+      aws_conn_id: aws_default
+      deferrable: false
+      force_stop: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_application
+      trigger_rule: all_done
+      wait_for_completion: true
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 25
+      dependencies:
+      - stop_application
+      - create_emr_serverless_task
+    delete_s3_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-emr-serverless-bucket
+      force_delete: true
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_s3_bucket
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies:
+      - delete_application
+  catchup: true
+  max_active_runs: 16
+  max_active_tasks: 16
+  max_consecutive_failed_dag_runs: 0

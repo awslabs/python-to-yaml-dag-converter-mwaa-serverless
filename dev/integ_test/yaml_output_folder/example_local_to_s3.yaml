@@ -1,0 +1,81 @@
+example_local_to_s3:
+  dag_id: example_local_to_s3
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    create-s3-bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-bucket
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create-s3-bucket
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_temp_file]
+    create_local_to_s3_job:
+      operator: airflow.providers.amazon.aws.transfers.local_to_s3.LocalFilesystemToS3Operator
+      aws_conn_id: aws_default
+      dest_bucket: test-bucket
+      dest_key: test/files/my-temp-file.txt
+      encrypt: false
+      filename: /tmp/sample-txt.txt
+      gzip: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replace: true
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_local_to_s3_job
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create-s3-bucket]
+    delete_s3_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-bucket
+      force_delete: true
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_s3_bucket
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [create_local_to_s3_job]
+    create_temp_file:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_local_to_s3.create_temp_file
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_temp_file
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      decorator: airflow.decorators.task
+    delete_temp_file:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_local_to_s3.delete_temp_file
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_temp_file
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_s3_bucket]
+      decorator: airflow.decorators.task
