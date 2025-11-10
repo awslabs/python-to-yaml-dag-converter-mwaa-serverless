@@ -1,0 +1,243 @@
+example_sagemaker_endpoint:
+  dag_id: example_sagemaker_endpoint
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    set_up:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_sagemaker_endpoint.set_up
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: set_up
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      decorator: airflow.decorators.task
+      env_id: test
+      role_arn: test-role-arn
+    create_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''bucket_name'')
+        }}'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_bucket
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [set_up]
+    upload_data:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
+      aws_conn_id: aws_default
+      data: |
+        0,4.9,2.5,4.5,1.7
+        1,7.0,3.2,4.7,1.4
+        0,7.3,2.9,6.3,1.8
+        2,5.1,3.5,1.4,0.2
+      encrypt: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replace: false
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''bucket_name'')
+        }}'
+      s3_key: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''input_data_s3_key'')
+        }}/train.csv'
+      task_id: upload_data
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_bucket, set_up]
+    train_model:
+      operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerTrainingOperator
+      action_if_job_exists: timestamp
+      aws_conn_id: aws_default
+      check_if_job_exists: true
+      check_interval: 30
+      config: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''training_config'')
+        }}'
+      deferrable: false
+      max_attempts: 60
+      outlets: []
+      params: {}
+      print_log: true
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: train_model
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      dependencies: [upload_data, set_up]
+    create_model:
+      operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerModelOperator
+      aws_conn_id: aws_default
+      config: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''model_config'')
+        }}'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_model
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [train_model, set_up]
+    configure_endpoint:
+      operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerEndpointConfigOperator
+      aws_conn_id: aws_default
+      config: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''endpoint_config_config'')
+        }}'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: configure_endpoint
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_model, set_up]
+    deploy_endpoint:
+      operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerEndpointOperator
+      aws_conn_id: aws_default
+      check_interval: 30
+      config: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''deploy_endpoint_config'')
+        }}'
+      deferrable: false
+      max_ingestion_time: 36000
+      operation: create
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: deploy_endpoint
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      dependencies: [configure_endpoint, set_up]
+    await_endpoint:
+      operator: airflow.providers.amazon.aws.sensors.sagemaker.SageMakerEndpointSensor
+      aws_conn_id: aws_default
+      endpoint_name: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''endpoint_name'')
+        }}'
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: await_endpoint
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [deploy_endpoint, set_up]
+    delete_model:
+      operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerDeleteModelOperator
+      aws_conn_id: aws_default
+      config:
+        ModelName: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''model_name'')
+          }}'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_model
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_endpoint, set_up]
+    delete_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''bucket_name'')
+        }}'
+      force_delete: true
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_bucket
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_model, set_up]
+    call_endpoint:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_sagemaker_endpoint.call_endpoint
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: call_endpoint
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [await_endpoint, set_up]
+      decorator: airflow.decorators.task
+      endpoint_name: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''endpoint_name'')
+        }}'
+    delete_endpoint_config:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_sagemaker_endpoint.delete_endpoint_config
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_endpoint_config
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [call_endpoint, set_up]
+      decorator: airflow.decorators.task
+      endpoint_config_job_name: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''endpoint_config_job_name'')
+        }}'
+    delete_endpoint:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_sagemaker_endpoint.delete_endpoint
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_endpoint
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_endpoint_config, set_up]
+      decorator: airflow.decorators.task
+      endpoint_name: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''endpoint_name'')
+        }}'
+    archive_logs:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_sagemaker_endpoint.archive_logs
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: archive_logs
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_bucket]
+      decorator: airflow.decorators.task
+      log_group_name: /aws/sagemaker/Endpoints/{{ task_instance.xcom_pull(task_ids='set_up',
+        key='endpoint_name') }}

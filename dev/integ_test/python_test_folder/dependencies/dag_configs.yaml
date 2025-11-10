@@ -1,0 +1,25 @@
+- name: sales
+  schedule: '0 1 * * *'
+  data_sources:
+    - name: transactions
+      path: /data/sales/transactions
+    - name: customers
+      path: /data/sales/customers
+    - name: products
+      path: /data/sales/products
+
+- name: marketing
+  schedule: '0 3 * * *'
+  data_sources:
+    - name: campaigns
+      path: /data/marketing/campaigns
+    - name: analytics
+      path: /data/marketing/analytics
+
+- name: inventory
+  schedule: '@daily'
+  data_sources:
+    - name: stock
+      path: /data/inventory/stock
+    - name: suppliers
+      path: /data/inventory/suppliers

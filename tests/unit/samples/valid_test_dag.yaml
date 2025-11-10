@@ -1,0 +1,15 @@
+test_dag:
+  dag_id: test_dag
+  params: {}
+  default_args:
+    owner: airflow
+    start_date: '2024-01-01'
+    retries: 1
+  schedule: '@daily'
+  tasks:
+    test_task:
+      operator: airflow.providers.standard.operators.empty.EmptyOperator
+      task_id: test_task
+      dependencies: []
+  catchup: true
+  max_active_runs: 16

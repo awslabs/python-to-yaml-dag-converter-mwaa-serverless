@@ -1,0 +1,77 @@
+example_eventbridge:
+  dag_id: example_eventbridge
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    put_events_task:
+      operator: airflow.providers.amazon.aws.operators.eventbridge.EventBridgePutEventsOperator
+      aws_conn_id: aws_default
+      entries:
+      - Detail: '{"event-name": "custom-event"}'
+        EventBusName: custom-bus
+        Source: example.myapp
+        DetailType: Sample Custom Event
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: put_events_task
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    put_rule_task:
+      operator: airflow.providers.amazon.aws.operators.eventbridge.EventBridgePutRuleOperator
+      aws_conn_id: aws_default
+      description: This rule matches events from example.myapp.
+      event_pattern: '{"source": ["example.myapp"]}'
+      name: example_rule
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      state: DISABLED
+      task_id: put_rule_task
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - put_events_task
+    enable_rule_task:
+      operator: airflow.providers.amazon.aws.operators.eventbridge.EventBridgeEnableRuleOperator
+      aws_conn_id: aws_default
+      name: example_rule
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: enable_rule_task
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - put_rule_task
+    disable_rule_task:
+      operator: airflow.providers.amazon.aws.operators.eventbridge.EventBridgeDisableRuleOperator
+      aws_conn_id: aws_default
+      name: example_rule
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: disable_rule_task
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - enable_rule_task
+  catchup: true
+  max_active_runs: 16
+  max_active_tasks: 16
+  max_consecutive_failed_dag_runs: 0

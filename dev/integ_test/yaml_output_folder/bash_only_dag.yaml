@@ -1,0 +1,90 @@
+bash_only_dag:
+  dag_id: bash_only_dag
+  params: {}
+  default_args:
+    owner: airflow
+    start_date: '2026-01-01'
+    retries: 1
+    retry_delay: 300.0
+  schedule: 0 0 * * ? *
+  tasks:
+    create_workspace:
+      operator: airflow.providers.standard.operators.bash.BashOperator
+      bash_command: mkdir -p /tmp/bash_workflow && echo "Workspace created"
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 1
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_workspace
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    download_data:
+      operator: airflow.providers.standard.operators.bash.BashOperator
+      bash_command: echo "sample,data,file" > /tmp/bash_workflow/data.csv && echo
+        "Data downloaded"
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 1
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: download_data
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_workspace]
+    process_data:
+      operator: airflow.providers.standard.operators.bash.BashOperator
+      bash_command: wc -l /tmp/bash_workflow/data.csv > /tmp/bash_workflow/line_count.txt
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 1
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: process_data
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [download_data]
+    generate_report:
+      operator: airflow.providers.standard.operators.bash.BashOperator
+      bash_command: echo "Processing completed at $(date)" > /tmp/bash_workflow/report.txt
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 1
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: generate_report
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [process_data]
+    archive_results:
+      operator: airflow.providers.standard.operators.bash.BashOperator
+      bash_command: tar -czf /tmp/bash_workflow_results.tar.gz -C /tmp bash_workflow/
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 1
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: archive_results
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [generate_report]
+    cleanup_workspace:
+      operator: airflow.providers.standard.operators.bash.BashOperator
+      bash_command: rm -rf /tmp/bash_workflow && echo "Workspace cleaned"
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 1
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: cleanup_workspace
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [archive_results]
+  description: A sample DAG with only Bash operators

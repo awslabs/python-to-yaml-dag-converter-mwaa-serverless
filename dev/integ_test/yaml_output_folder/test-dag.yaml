@@ -1,0 +1,47 @@
+test-dag:
+  dag_id: test-dag
+  params: {}
+  default_args:
+    start_date: '2026-12-01'
+  schedule: '@once'
+  tasks:
+    task0-0:
+      operator: airflow.providers.standard.operators.bash.BashOperator
+      bash_command: sleep 10
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 2
+      retry_delay: 60.0
+      retry_exponential_backoff: false
+      task_id: task0-0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    task1-0:
+      operator: airflow.providers.standard.operators.bash.BashOperator
+      bash_command: sleep 10
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 2
+      retry_delay: 60.0
+      retry_exponential_backoff: false
+      task_id: task1-0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [task0-0]
+    task2-0:
+      operator: airflow.providers.standard.operators.bash.BashOperator
+      bash_command: sleep 10
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 2
+      retry_delay: 60.0
+      retry_exponential_backoff: false
+      task_id: task2-0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [task1-0]
+  is_paused_upon_creation: false

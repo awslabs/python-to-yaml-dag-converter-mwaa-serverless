@@ -1,0 +1,34 @@
+aws_athena_queries:
+  dag_id: aws_athena_queries
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@daily'
+  tasks:
+    run_athena_query:
+      operator: airflow.providers.amazon.aws.operators.athena.AthenaOperator
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: run_athena_query
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      expand:
+        query:
+        - SELECT * FROM sales WHERE region = 'us-east-1'
+        - SELECT * FROM customers WHERE signup_date > '2023-01-01'
+        - SELECT * FROM products WHERE inventory < 100
+      partial:
+        aws_conn_id: aws_default
+        database: analytics
+        output_location: s3://my-athena-results/
+        sleep_time: 30
+        weight_rule: downstream
+  catchup: true
+  max_active_runs: 16
+  max_active_tasks: 16
+  max_consecutive_failed_dag_runs: 0

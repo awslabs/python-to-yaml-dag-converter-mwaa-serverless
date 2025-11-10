@@ -1,0 +1,8 @@
+trigger_scale_up:
+  dag_id: trigger_scale_up
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: 0,30 * * * ? *
+  tasks: {}
+  is_paused_upon_creation: false

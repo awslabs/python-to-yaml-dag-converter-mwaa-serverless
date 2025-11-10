@@ -1,0 +1,261 @@
+example_dynamodb_to_s3:
+  dag_id: example_dynamodb_to_s3
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    set_up_table:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_dynamodb_s3.set_up_table
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: set_up_table
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      decorator: airflow.decorators.task
+      table_name: test-dynamodb-table
+    create_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-dynamodb-bucket
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_bucket
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [set_up_table]
+    backup_db:
+      operator: airflow.providers.amazon.aws.transfers.dynamodb_to_s3.DynamoDBToS3Operator
+      check_interval: 30
+      dest_aws_conn_id: aws_default
+      dynamodb_table_name: test-dynamodb-table
+      export_format: DYNAMODB_JSON
+      export_table_to_point_in_time_kwargs: {}
+      file_size: 20
+      max_attempts: 60
+      outlets: []
+      params: {}
+      point_in_time_export: false
+      priority_weight: 1
+      process_func: airflow.providers.amazon.aws.transfers.dynamodb_to_s3._convert_item_to_json_bytes
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      s3_bucket_name: test-dynamodb-bucket
+      s3_key_prefix: ''
+      source_aws_conn_id: aws_default
+      task_id: backup_db
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [wait_for_bucket]
+    backup_db_segment_1:
+      operator: airflow.providers.amazon.aws.transfers.dynamodb_to_s3.DynamoDBToS3Operator
+      check_interval: 30
+      dest_aws_conn_id: aws_default
+      dynamodb_scan_kwargs:
+        TotalSegments: 2
+        Segment: 0
+      dynamodb_table_name: test-dynamodb-table
+      export_format: DYNAMODB_JSON
+      export_table_to_point_in_time_kwargs: {}
+      file_size: 1000
+      max_attempts: 60
+      outlets: []
+      params: {}
+      point_in_time_export: false
+      priority_weight: 1
+      process_func: airflow.providers.amazon.aws.transfers.dynamodb_to_s3._convert_item_to_json_bytes
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      s3_bucket_name: test-dynamodb-bucket
+      s3_key_prefix: dynamodb-segmented-file-1-
+      source_aws_conn_id: aws_default
+      task_id: backup_db_segment_1
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [backup_db]
+    backup_db_segment_2:
+      operator: airflow.providers.amazon.aws.transfers.dynamodb_to_s3.DynamoDBToS3Operator
+      check_interval: 30
+      dest_aws_conn_id: aws_default
+      dynamodb_scan_kwargs:
+        TotalSegments: 2
+        Segment: 1
+      dynamodb_table_name: test-dynamodb-table
+      export_format: DYNAMODB_JSON
+      export_table_to_point_in_time_kwargs: {}
+      file_size: 1000
+      max_attempts: 60
+      outlets: []
+      params: {}
+      point_in_time_export: false
+      priority_weight: 1
+      process_func: airflow.providers.amazon.aws.transfers.dynamodb_to_s3._convert_item_to_json_bytes
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      s3_bucket_name: test-dynamodb-bucket
+      s3_key_prefix: dynamodb-segmented-file-2-
+      source_aws_conn_id: aws_default
+      task_id: backup_db_segment_2
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [backup_db_segment_1]
+    get_export_time:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_dynamodb_s3.get_export_time
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: get_export_time
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [backup_db_segment_2]
+      decorator: airflow.decorators.task
+      table_name: test-dynamodb-table
+    backup_db_to_point_in_time_full_export:
+      operator: airflow.providers.amazon.aws.transfers.dynamodb_to_s3.DynamoDBToS3Operator
+      check_interval: 30
+      dest_aws_conn_id: aws_default
+      dynamodb_table_name: test-dynamodb-table
+      export_format: DYNAMODB_JSON
+      export_table_to_point_in_time_kwargs: {}
+      export_time: '{{ task_instance.xcom_pull(task_ids=''get_export_time'', key=''return_value'')
+        }}'
+      file_size: 1000
+      max_attempts: 90
+      outlets: []
+      params: {}
+      point_in_time_export: true
+      priority_weight: 1
+      process_func: airflow.providers.amazon.aws.transfers.dynamodb_to_s3._convert_item_to_json_bytes
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      s3_bucket_name: test-dynamodb-bucket
+      s3_key_prefix: dynamodb-segmented-file-3-
+      source_aws_conn_id: aws_default
+      task_id: backup_db_to_point_in_time_full_export
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [get_export_time]
+    delete_dynamodb_table:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_dynamodb_s3.delete_dynamodb_table
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_dynamodb_table
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [backup_db_to_point_in_time_incremental_export]
+      decorator: airflow.decorators.task
+      table_name: test-dynamodb-table
+    delete_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-dynamodb-bucket
+      force_delete: true
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_bucket
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_dynamodb_table]
+    get_latest_export_time:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_dynamodb_s3.get_latest_export_time
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: get_latest_export_time
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [backup_db_to_point_in_time_full_export]
+      decorator: airflow.decorators.task
+      table_name: test-dynamodb-table
+    backup_db_to_point_in_time_incremental_export:
+      operator: airflow.providers.amazon.aws.transfers.dynamodb_to_s3.DynamoDBToS3Operator
+      check_interval: 30
+      dest_aws_conn_id: aws_default
+      dynamodb_table_name: test-dynamodb-table
+      export_format: DYNAMODB_JSON
+      export_table_to_point_in_time_kwargs:
+        ExportType: INCREMENTAL_EXPORT
+        IncrementalExportSpecification:
+          ExportFromTime: '{{ task_instance.xcom_pull(task_ids=''get_export_time'',
+            key=''return_value'') }}'
+          ExportToTime: '{{ task_instance.xcom_pull(task_ids=''get_latest_export_time'',
+            key=''return_value'') }}'
+          ExportViewType: NEW_AND_OLD_IMAGES
+      file_size: 1000
+      max_attempts: 90
+      outlets: []
+      params: {}
+      point_in_time_export: true
+      priority_weight: 1
+      process_func: airflow.providers.amazon.aws.transfers.dynamodb_to_s3._convert_item_to_json_bytes
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      s3_bucket_name: test-dynamodb-bucket
+      s3_key_prefix: dynamodb-segmented-file-4-
+      source_aws_conn_id: aws_default
+      task_id: backup_db_to_point_in_time_incremental_export
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [get_export_time, should_run_incremental_export, get_latest_export_time]
+    should_run_incremental_export:
+      operator: airflow.providers.standard.decorators.short_circuit._ShortCircuitDecoratedOperator
+      ignore_downstream_trigger_rules: true
+      op_args: []
+      op_kwargs:
+        start_time: '{{ task_instance.xcom_pull(task_ids=''get_export_time'', key=''return_value'')
+          }}'
+        end_time: '{{ task_instance.xcom_pull(task_ids=''get_latest_export_time'',
+          key=''return_value'') }}'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_dynamodb_s3.should_run_incremental_export
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: should_run_incremental_export
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [get_export_time, get_latest_export_time]
+    wait_for_bucket:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_dynamodb_s3.wait_for_bucket
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: wait_for_bucket
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_bucket]
+      decorator: airflow.decorators.task
+      s3_bucket_name: test-dynamodb-bucket

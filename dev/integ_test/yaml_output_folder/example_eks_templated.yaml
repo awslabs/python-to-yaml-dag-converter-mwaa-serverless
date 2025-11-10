@@ -1,0 +1,198 @@
+example_eks_templated:
+  dag_id: example_eks_templated
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    create_eks_cluster:
+      operator: airflow.providers.amazon.aws.operators.eks.EksCreateClusterOperator
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      cluster_role_arn: test-cluster-role-arn
+      create_cluster_kwargs: {}
+      create_fargate_profile_kwargs: {}
+      create_nodegroup_kwargs: {}
+      deferrable: false
+      fargate_profile_name: profile
+      fargate_selectors:
+      - namespace: default
+      nodegroup_name: nodegroup
+      outlets: []
+      params: {}
+      priority_weight: 1
+      resources_vpc_config:
+        subnetIds:
+        - subnet-12345ab
+        - subnet-67890cd
+        endpointPublicAccess: true
+        endpointPrivateAccess: false
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_eks_cluster
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 30
+      waiter_max_attempts: 40
+      dependencies: []
+    wait_for_create_cluster:
+      operator: airflow.providers.amazon.aws.sensors.eks.EksClusterStateSensor
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      target_state:
+        __type__: airflow.providers.amazon.aws.hooks.eks.ClusterStates
+        __args__:
+        - ACTIVE
+      task_id: wait_for_create_cluster
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - create_eks_cluster
+    create_eks_nodegroup:
+      operator: airflow.providers.amazon.aws.operators.eks.EksCreateNodegroupOperator
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      create_nodegroup_kwargs: {}
+      deferrable: false
+      nodegroup_name: test-nodegroup
+      nodegroup_role_arn: test-nodegroup-role-arn
+      nodegroup_subnets:
+      - subnet-12345ab
+      - subnet-67890cd
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_eks_nodegroup
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 30
+      waiter_max_attempts: 80
+      dependencies:
+      - wait_for_create_cluster
+    wait_for_create_nodegroup:
+      operator: airflow.providers.amazon.aws.sensors.eks.EksNodegroupStateSensor
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      mode: poke
+      nodegroup_name: test-nodegroup
+      outlets: []
+      params: {}
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      target_state:
+        __type__: airflow.providers.amazon.aws.hooks.eks.NodegroupStates
+        __args__:
+        - ACTIVE
+      task_id: wait_for_create_nodegroup
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - create_eks_nodegroup
+    delete_eks_nodegroup:
+      operator: airflow.providers.amazon.aws.operators.eks.EksDeleteNodegroupOperator
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      deferrable: false
+      nodegroup_name: test-nodegroup
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_eks_nodegroup
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 30
+      waiter_max_attempts: 40
+      dependencies:
+      - wait_for_create_nodegroup
+    wait_for_delete_nodegroup:
+      operator: airflow.providers.amazon.aws.sensors.eks.EksNodegroupStateSensor
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      mode: poke
+      nodegroup_name: test-nodegroup
+      outlets: []
+      params: {}
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      target_state:
+        __type__: airflow.providers.amazon.aws.hooks.eks.NodegroupStates
+        __args__:
+        - NONEXISTENT
+      task_id: wait_for_delete_nodegroup
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - delete_eks_nodegroup
+    delete_eks_cluster:
+      operator: airflow.providers.amazon.aws.operators.eks.EksDeleteClusterOperator
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      deferrable: false
+      force_delete_compute: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_eks_cluster
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 30
+      waiter_max_attempts: 40
+      dependencies:
+      - wait_for_delete_nodegroup
+    wait_for_delete_cluster:
+      operator: airflow.providers.amazon.aws.sensors.eks.EksClusterStateSensor
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      target_state:
+        __type__: airflow.providers.amazon.aws.hooks.eks.ClusterStates
+        __args__:
+        - NONEXISTENT
+      task_id: wait_for_delete_cluster
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - delete_eks_cluster
+  catchup: true
+  max_active_runs: 16
+  max_active_tasks: 16
+  max_consecutive_failed_dag_runs: 0

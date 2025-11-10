@@ -1,0 +1,85 @@
+dynamic_dag_sales:
+  dag_id: dynamic_dag_sales
+  params: {}
+  default_args:
+    owner: airflow
+    start_date: '2026-01-01'
+    retries: 1
+    retry_delay: 300.0
+  schedule: 0 1 * * ? *
+  tasks:
+    start:
+      operator: airflow.providers.standard.operators.bash.BashOperator
+      bash_command: echo 'Starting processing for sales'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 1
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: start
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    process_transactions:
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      op_args: []
+      op_kwargs:
+        data_source: /data/sales/transactions
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: dag_gen_config.process_data
+      retries: 1
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: process_transactions
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [start]
+    process_customers:
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      op_args: []
+      op_kwargs:
+        data_source: /data/sales/customers
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: dag_gen_config.process_data
+      retries: 1
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: process_customers
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [start]
+    process_products:
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      op_args: []
+      op_kwargs:
+        data_source: /data/sales/products
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: dag_gen_config.process_data
+      retries: 1
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: process_products
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [start]
+    end:
+      operator: airflow.providers.standard.operators.bash.BashOperator
+      bash_command: echo 'Completed processing for sales'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 1
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: end
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [process_transactions, process_customers, process_products]
+  description: Dynamically generated DAG for sales

@@ -1,0 +1,1023 @@
+example_sagemaker:
+  dag_id: example_sagemaker
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    set_up:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_sagemaker.set_up
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: set_up
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      decorator: airflow.decorators.task
+      env_id: test
+      role_arn: test-role-arn
+    create_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''bucket_name'')
+        }}'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_bucket
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [set_up]
+    upload_dataset:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
+      aws_conn_id: aws_default
+      data: |
+        class,x,y
+        0,0,600
+        1,1,599
+        2,2,598
+        3,3,597
+        4,4,596
+        5,5,595
+        6,6,594
+        7,7,593
+        8,8,592
+        9,9,591
+        10,10,590
+        11,11,589
+        12,12,588
+        13,13,587
+        14,14,586
+        15,15,585
+        16,16,584
+        17,17,583
+        18,18,582
+        19,19,581
+        20,20,580
+        21,21,579
+        22,22,578
+        23,23,577
+        24,24,576
+        25,25,575
+        26,26,574
+        27,27,573
+        28,28,572
+        29,29,571
+        30,30,570
+        31,31,569
+        32,32,568
+        33,33,567
+        34,34,566
+        35,35,565
+        36,36,564
+        37,37,563
+        38,38,562
+        39,39,561
+        40,40,560
+        41,41,559
+        42,42,558
+        43,43,557
+        44,44,556
+        45,45,555
+        46,46,554
+        47,47,553
+        48,48,552
+        49,49,551
+        50,50,550
+        51,51,549
+        52,52,548
+        53,53,547
+        54,54,546
+        55,55,545
+        56,56,544
+        57,57,543
+        58,58,542
+        59,59,541
+        60,60,540
+        61,61,539
+        62,62,538
+        63,63,537
+        64,64,536
+        65,65,535
+        66,66,534
+        67,67,533
+        68,68,532
+        69,69,531
+        70,70,530
+        71,71,529
+        72,72,528
+        73,73,527
+        74,74,526
+        75,75,525
+        76,76,524
+        77,77,523
+        78,78,522
+        79,79,521
+        80,80,520
+        81,81,519
+        82,82,518
+        83,83,517
+        84,84,516
+        85,85,515
+        86,86,514
+        87,87,513
+        88,88,512
+        89,89,511
+        90,90,510
+        91,91,509
+        92,92,508
+        93,93,507
+        94,94,506
+        95,95,505
+        96,96,504
+        97,97,503
+        98,98,502
+        99,99,501
+        0,100,500
+        1,101,499
+        2,102,498
+        3,103,497
+        4,104,496
+        5,105,495
+        6,106,494
+        7,107,493
+        8,108,492
+        9,109,491
+        10,110,490
+        11,111,489
+        12,112,488
+        13,113,487
+        14,114,486
+        15,115,485
+        16,116,484
+        17,117,483
+        18,118,482
+        19,119,481
+        20,120,480
+        21,121,479
+        22,122,478
+        23,123,477
+        24,124,476
+        25,125,475
+        26,126,474
+        27,127,473
+        28,128,472
+        29,129,471
+        30,130,470
+        31,131,469
+        32,132,468
+        33,133,467
+        34,134,466
+        35,135,465
+        36,136,464
+        37,137,463
+        38,138,462
+        39,139,461
+        40,140,460
+        41,141,459
+        42,142,458
+        43,143,457
+        44,144,456
+        45,145,455
+        46,146,454
+        47,147,453
+        48,148,452
+        49,149,451
+        50,150,450
+        51,151,449
+        52,152,448
+        53,153,447
+        54,154,446
+        55,155,445
+        56,156,444
+        57,157,443
+        58,158,442
+        59,159,441
+        60,160,440
+        61,161,439
+        62,162,438
+        63,163,437
+        64,164,436
+        65,165,435
+        66,166,434
+        67,167,433
+        68,168,432
+        69,169,431
+        70,170,430
+        71,171,429
+        72,172,428
+        73,173,427
+        74,174,426
+        75,175,425
+        76,176,424
+        77,177,423
+        78,178,422
+        79,179,421
+        80,180,420
+        81,181,419
+        82,182,418
+        83,183,417
+        84,184,416
+        85,185,415
+        86,186,414
+        87,187,413
+        88,188,412
+        89,189,411
+        90,190,410
+        91,191,409
+        92,192,408
+        93,193,407
+        94,194,406
+        95,195,405
+        96,196,404
+        97,197,403
+        98,198,402
+        99,199,401
+        0,200,400
+        1,201,399
+        2,202,398
+        3,203,397
+        4,204,396
+        5,205,395
+        6,206,394
+        7,207,393
+        8,208,392
+        9,209,391
+        10,210,390
+        11,211,389
+        12,212,388
+        13,213,387
+        14,214,386
+        15,215,385
+        16,216,384
+        17,217,383
+        18,218,382
+        19,219,381
+        20,220,380
+        21,221,379
+        22,222,378
+        23,223,377
+        24,224,376
+        25,225,375
+        26,226,374
+        27,227,373
+        28,228,372
+        29,229,371
+        30,230,370
+        31,231,369
+        32,232,368
+        33,233,367
+        34,234,366
+        35,235,365
+        36,236,364
+        37,237,363
+        38,238,362
+        39,239,361
+        40,240,360
+        41,241,359
+        42,242,358
+        43,243,357
+        44,244,356
+        45,245,355
+        46,246,354
+        47,247,353
+        48,248,352
+        49,249,351
+        50,250,350
+        51,251,349
+        52,252,348
+        53,253,347
+        54,254,346
+        55,255,345
+        56,256,344
+        57,257,343
+        58,258,342
+        59,259,341
+        60,260,340
+        61,261,339
+        62,262,338
+        63,263,337
+        64,264,336
+        65,265,335
+        66,266,334
+        67,267,333
+        68,268,332
+        69,269,331
+        70,270,330
+        71,271,329
+        72,272,328
+        73,273,327
+        74,274,326
+        75,275,325
+        76,276,324
+        77,277,323
+        78,278,322
+        79,279,321
+        80,280,320
+        81,281,319
+        82,282,318
+        83,283,317
+        84,284,316
+        85,285,315
+        86,286,314
+        87,287,313
+        88,288,312
+        89,289,311
+        90,290,310
+        91,291,309
+        92,292,308
+        93,293,307
+        94,294,306
+        95,295,305
+        96,296,304
+        97,297,303
+        98,298,302
+        99,299,301
+        0,300,300
+        1,301,299
+        2,302,298
+        3,303,297
+        4,304,296
+        5,305,295
+        6,306,294
+        7,307,293
+        8,308,292
+        9,309,291
+        10,310,290
+        11,311,289
+        12,312,288
+        13,313,287
+        14,314,286
+        15,315,285
+        16,316,284
+        17,317,283
+        18,318,282
+        19,319,281
+        20,320,280
+        21,321,279
+        22,322,278
+        23,323,277
+        24,324,276
+        25,325,275
+        26,326,274
+        27,327,273
+        28,328,272
+        29,329,271
+        30,330,270
+        31,331,269
+        32,332,268
+        33,333,267
+        34,334,266
+        35,335,265
+        36,336,264
+        37,337,263
+        38,338,262
+        39,339,261
+        40,340,260
+        41,341,259
+        42,342,258
+        43,343,257
+        44,344,256
+        45,345,255
+        46,346,254
+        47,347,253
+        48,348,252
+        49,349,251
+        50,350,250
+        51,351,249
+        52,352,248
+        53,353,247
+        54,354,246
+        55,355,245
+        56,356,244
+        57,357,243
+        58,358,242
+        59,359,241
+        60,360,240
+        61,361,239
+        62,362,238
+        63,363,237
+        64,364,236
+        65,365,235
+        66,366,234
+        67,367,233
+        68,368,232
+        69,369,231
+        70,370,230
+        71,371,229
+        72,372,228
+        73,373,227
+        74,374,226
+        75,375,225
+        76,376,224
+        77,377,223
+        78,378,222
+        79,379,221
+        80,380,220
+        81,381,219
+        82,382,218
+        83,383,217
+        84,384,216
+        85,385,215
+        86,386,214
+        87,387,213
+        88,388,212
+        89,389,211
+        90,390,210
+        91,391,209
+        92,392,208
+        93,393,207
+        94,394,206
+        95,395,205
+        96,396,204
+        97,397,203
+        98,398,202
+        99,399,201
+        0,400,200
+        1,401,199
+        2,402,198
+        3,403,197
+        4,404,196
+        5,405,195
+        6,406,194
+        7,407,193
+        8,408,192
+        9,409,191
+        10,410,190
+        11,411,189
+        12,412,188
+        13,413,187
+        14,414,186
+        15,415,185
+        16,416,184
+        17,417,183
+        18,418,182
+        19,419,181
+        20,420,180
+        21,421,179
+        22,422,178
+        23,423,177
+        24,424,176
+        25,425,175
+        26,426,174
+        27,427,173
+        28,428,172
+        29,429,171
+        30,430,170
+        31,431,169
+        32,432,168
+        33,433,167
+        34,434,166
+        35,435,165
+        36,436,164
+        37,437,163
+        38,438,162
+        39,439,161
+        40,440,160
+        41,441,159
+        42,442,158
+        43,443,157
+        44,444,156
+        45,445,155
+        46,446,154
+        47,447,153
+        48,448,152
+        49,449,151
+        50,450,150
+        51,451,149
+        52,452,148
+        53,453,147
+        54,454,146
+        55,455,145
+        56,456,144
+        57,457,143
+        58,458,142
+        59,459,141
+        60,460,140
+        61,461,139
+        62,462,138
+        63,463,137
+        64,464,136
+        65,465,135
+        66,466,134
+        67,467,133
+        68,468,132
+        69,469,131
+        70,470,130
+        71,471,129
+        72,472,128
+        73,473,127
+        74,474,126
+        75,475,125
+        76,476,124
+        77,477,123
+        78,478,122
+        79,479,121
+        80,480,120
+        81,481,119
+        82,482,118
+        83,483,117
+        84,484,116
+        85,485,115
+        86,486,114
+        87,487,113
+        88,488,112
+        89,489,111
+        90,490,110
+        91,491,109
+        92,492,108
+        93,493,107
+        94,494,106
+        95,495,105
+        96,496,104
+        97,497,103
+        98,498,102
+        99,499,101
+        0,500,100
+        1,501,99
+        2,502,98
+        3,503,97
+        4,504,96
+        5,505,95
+        6,506,94
+        7,507,93
+        8,508,92
+        9,509,91
+        10,510,90
+        11,511,89
+        12,512,88
+        13,513,87
+        14,514,86
+        15,515,85
+        16,516,84
+        17,517,83
+        18,518,82
+        19,519,81
+        20,520,80
+        21,521,79
+        22,522,78
+        23,523,77
+        24,524,76
+        25,525,75
+        26,526,74
+        27,527,73
+        28,528,72
+        29,529,71
+        30,530,70
+        31,531,69
+        32,532,68
+        33,533,67
+        34,534,66
+        35,535,65
+        36,536,64
+        37,537,63
+        38,538,62
+        39,539,61
+        40,540,60
+        41,541,59
+        42,542,58
+        43,543,57
+        44,544,56
+        45,545,55
+        46,546,54
+        47,547,53
+        48,548,52
+        49,549,51
+        50,550,50
+        51,551,49
+        52,552,48
+        53,553,47
+        54,554,46
+        55,555,45
+        56,556,44
+        57,557,43
+        58,558,42
+        59,559,41
+        60,560,40
+        61,561,39
+        62,562,38
+        63,563,37
+        64,564,36
+        65,565,35
+        66,566,34
+        67,567,33
+        68,568,32
+        69,569,31
+        70,570,30
+        71,571,29
+        72,572,28
+        73,573,27
+        74,574,26
+        75,575,25
+        76,576,24
+        77,577,23
+        78,578,22
+        79,579,21
+        80,580,20
+        81,581,19
+        82,582,18
+        83,583,17
+        84,584,16
+        85,585,15
+        86,586,14
+        87,587,13
+        88,588,12
+        89,589,11
+        90,590,10
+        91,591,9
+        92,592,8
+        93,593,7
+        94,594,6
+        95,595,5
+        96,596,4
+        97,597,3
+        98,598,2
+        99,599,1
+      encrypt: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replace: true
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''bucket_name'')
+        }}'
+      s3_key: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''raw_data_s3_key'')
+        }}'
+      task_id: upload_dataset
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_bucket, set_up]
+    auto_ML:
+      operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerAutoMLOperator
+      aws_conn_id: aws_default
+      check_interval: 30
+      compressed_input: false
+      config: {}
+      job_name: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''auto_ml_job_name'')
+        }}'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      role_arn: test-role-arn
+      s3_input: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''input_data_uri'')
+        }}'
+      s3_output: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''output_data_uri'')
+        }}'
+      target_attribute: class
+      task_id: auto_ML
+      time_limit: 30
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      dependencies: [upload_dataset, set_up]
+    await_auto_ML:
+      operator: airflow.providers.amazon.aws.sensors.sagemaker.SageMakerAutoMLSensor
+      aws_conn_id: aws_default
+      job_name: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''auto_ml_job_name'')
+        }}'
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 10
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: await_auto_ML
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [auto_ML, set_up]
+    create_experiment:
+      operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerCreateExperimentOperator
+      aws_conn_id: aws_default
+      name: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''experiment_name'')
+        }}'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      tags: {}
+      task_id: create_experiment
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [await_auto_ML, set_up]
+    preprocess_raw_data:
+      operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerProcessingOperator
+      action_if_job_exists: timestamp
+      aws_conn_id: aws_default
+      check_interval: 30
+      config: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''processing_config'')
+        }}'
+      deferrable: false
+      max_attempts: 60
+      outlets: []
+      params: {}
+      print_log: true
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: preprocess_raw_data
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      dependencies: [create_experiment, set_up]
+    await_preprocess:
+      operator: airflow.providers.amazon.aws.sensors.sagemaker.SageMakerProcessingSensor
+      aws_conn_id: aws_default
+      job_name: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''processing_job_name'')
+        }}'
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: await_preprocess
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [preprocess_raw_data, set_up]
+    train_model:
+      operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerTrainingOperator
+      action_if_job_exists: timestamp
+      aws_conn_id: aws_default
+      check_if_job_exists: true
+      check_interval: 30
+      config: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''training_config'')
+        }}'
+      deferrable: false
+      max_attempts: 60
+      outlets: []
+      params: {}
+      print_log: true
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: train_model
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      dependencies: [await_preprocess, set_up]
+    await_training:
+      operator: airflow.providers.amazon.aws.sensors.sagemaker.SageMakerTrainingSensor
+      aws_conn_id: aws_default
+      job_name: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''training_job_name'')
+        }}'
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 60.0
+      print_log: true
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: await_training
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [train_model, set_up]
+    create_model:
+      operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerModelOperator
+      aws_conn_id: aws_default
+      config: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''model_config'')
+        }}'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_model
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [await_training, set_up]
+    register_model:
+      operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerRegisterModelVersionOperator
+      aws_conn_id: aws_default
+      config: {}
+      image_uri: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''inference_code_image'')
+        }}'
+      model_approval: ApprovalStatus.PENDING_MANUAL_APPROVAL
+      model_url: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''model_trained_weights'')
+        }}'
+      outlets: []
+      package_desc: ''
+      package_group_desc: ''
+      package_group_name: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''model_package_group_name'')
+        }}'
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: register_model
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_model, set_up]
+    tune_model:
+      operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerTuningOperator
+      aws_conn_id: aws_default
+      check_interval: 30
+      config: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''tuning_config'')
+        }}'
+      deferrable: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: tune_model
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      dependencies: [register_model, set_up]
+    await_tuning:
+      operator: airflow.providers.amazon.aws.sensors.sagemaker.SageMakerTuningSensor
+      aws_conn_id: aws_default
+      job_name: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''tuning_job_name'')
+        }}'
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: await_tuning
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [tune_model, set_up]
+    test_model:
+      operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerTransformOperator
+      action_if_job_exists: timestamp
+      action_if_model_exists: timestamp
+      aws_conn_id: aws_default
+      check_if_job_exists: true
+      check_if_model_exists: true
+      check_interval: 30
+      config: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''transform_config'')
+        }}'
+      deferrable: false
+      max_attempts: 60
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: test_model
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      dependencies: [await_tuning, set_up]
+    await_transform:
+      operator: airflow.providers.amazon.aws.sensors.sagemaker.SageMakerTransformSensor
+      aws_conn_id: aws_default
+      job_name: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''transform_job_name'')
+        }}'
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: await_transform
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [test_model, set_up]
+    delete_model:
+      operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerDeleteModelOperator
+      aws_conn_id: aws_default
+      config:
+        ModelName: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''model_name'')
+          }}'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_model
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_model_group, set_up]
+    delete_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''bucket_name'')
+        }}'
+      force_delete: true
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_bucket
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_model, set_up]
+    delete_ecr_repository:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_sagemaker.delete_ecr_repository
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_ecr_repository
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [await_transform, set_up]
+      decorator: airflow.decorators.task
+      repository_name: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''ecr_repository_name'')
+        }}'
+    delete_model_group:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_sagemaker.delete_model_group
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_model_group
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_ecr_repository, register_model, set_up]
+      decorator: airflow.decorators.task
+      group_name: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''model_package_group_name'')
+        }}'
+      model_version_arn: +register_model
+    stop_automl_job:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_sagemaker.stop_automl_job
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: stop_automl_job
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_bucket, set_up]
+      decorator: airflow.decorators.task
+      job_name: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''auto_ml_job_name'')
+        }}'
+    delete_experiments:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_sagemaker.delete_experiments
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_experiments
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [stop_automl_job, set_up]
+      decorator: airflow.decorators.task
+      experiment_names: '["{{ task_instance.xcom_pull(task_ids=''set_up'', key=''experiment_name'')
+        }}", "{{ task_instance.xcom_pull(task_ids=''set_up'', key=''auto_ml_job_name'')
+        }}-aws-auto-ml-job", "{{ task_instance.xcom_pull(task_ids=''set_up'', key=''tuning_job_name'')
+        }}-aws-tuning-job"]'
+    delete_docker_image:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_sagemaker.delete_docker_image
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_docker_image
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_experiments, set_up]
+      decorator: airflow.decorators.task
+      image_name: '{{ task_instance.xcom_pull(task_ids=''set_up'', key=''docker_image'')
+        }}'

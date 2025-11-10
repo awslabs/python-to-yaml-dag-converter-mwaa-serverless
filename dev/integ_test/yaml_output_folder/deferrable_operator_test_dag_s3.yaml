@@ -1,0 +1,98 @@
+deferrable_operator_test_dag_s3:
+  dag_id: deferrable_operator_test_dag_s3
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    generate_s3_key_path:
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      op_args: []
+      op_kwargs: {}
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: aws_s3_mwaa_1.create_s3_key_path
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: generate_s3_key_path
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    sleep_before_writing_to_s3:
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      op_args: []
+      op_kwargs: {}
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: aws_s3_mwaa_1.sleep_job
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: sleep_before_writing_to_s3
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [generate_s3_key_path]
+    s3_sensor_deferrable:
+      operator: airflow.providers.amazon.aws.sensors.s3.S3KeySensor
+      aws_conn_id: aws_default
+      bucket_key: '{{ ti.xcom_pull(task_ids=''generate_s3_key_path'',key=''test_key'')
+        }}'
+      bucket_name: '{{ ti.xcom_pull(task_ids=''generate_s3_key_path'',key=''test_bucket'')
+        }}'
+      deferrable: true
+      metadata_keys: [Size, Key]
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: s3_sensor_deferrable
+      timeout: 604800.0
+      trigger_rule: all_success
+      use_regex: false
+      wait_for_downstream: false
+      wildcard_match: false
+      dependencies: [generate_s3_key_path]
+    write_data_to_s3:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
+      aws_conn_id: aws_default
+      data: test-data
+      encrypt: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replace: false
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: '{{ ti.xcom_pull(task_ids=''generate_s3_key_path'',key=''test_bucket'')
+        }}'
+      s3_key: '{{ ti.xcom_pull(task_ids=''generate_s3_key_path'',key=''test_key'')
+        }}'
+      task_id: write_data_to_s3
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [sleep_before_writing_to_s3]
+    delete_data_from_s3:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteObjectsOperator
+      aws_conn_id: aws_default
+      bucket: '{{ ti.xcom_pull(task_ids=''generate_s3_key_path'',key=''test_bucket'')
+        }}'
+      keys: '{{ ti.xcom_pull(task_ids=''generate_s3_key_path'',key=''test_key'') }}'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_data_from_s3
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [s3_sensor_deferrable]
+  is_paused_upon_creation: false

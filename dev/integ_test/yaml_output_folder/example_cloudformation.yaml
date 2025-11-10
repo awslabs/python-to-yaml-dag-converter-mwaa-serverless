@@ -1,0 +1,83 @@
+example_cloudformation:
+  dag_id: example_cloudformation
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    create_stack:
+      operator: airflow.providers.amazon.aws.operators.cloud_formation.CloudFormationCreateStackOperator
+      aws_conn_id: aws_default
+      cloudformation_parameters:
+        StackName: test-stack
+        TemplateBody: '{"Description": "Stack from Airflow CloudFormation example
+          DAG", "Resources": {"ExampleQueue": {"Type": "AWS::SQS::Queue"}}}'
+        TimeoutInMinutes: 2
+        OnFailure: DELETE
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      stack_name: test-stack
+      task_id: create_stack
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    wait_for_stack_create:
+      operator: airflow.providers.amazon.aws.sensors.cloud_formation.CloudFormationCreateStackSensor
+      aws_conn_id: aws_default
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 10
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      stack_name: test-stack
+      task_id: wait_for_stack_create
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - create_stack
+    delete_stack:
+      operator: airflow.providers.amazon.aws.operators.cloud_formation.CloudFormationDeleteStackOperator
+      aws_conn_id: aws_default
+      cloudformation_parameters: {}
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      stack_name: test-stack
+      task_id: delete_stack
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies:
+      - wait_for_stack_create
+    wait_for_stack_delete:
+      operator: airflow.providers.amazon.aws.sensors.cloud_formation.CloudFormationDeleteStackSensor
+      aws_conn_id: aws_default
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 10
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      stack_name: test-stack
+      task_id: wait_for_stack_delete
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - delete_stack
+  catchup: true
+  max_active_runs: 16
+  max_active_tasks: 16
+  max_consecutive_failed_dag_runs: 0

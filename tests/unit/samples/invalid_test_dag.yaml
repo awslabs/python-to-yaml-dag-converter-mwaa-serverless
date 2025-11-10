@@ -1,0 +1,4 @@
+invalid_dag:
+  dag_id: invalid_dag
+  # Missing required fields like tasks
+  schedule: '@daily'

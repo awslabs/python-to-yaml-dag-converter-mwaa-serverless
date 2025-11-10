@@ -1,0 +1,115 @@
+example_ecs_fargate:
+  dag_id: example_ecs_fargate
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    register_task_definition:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_ecs_fargate.register_task_definition
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: register_task_definition
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_cluster]
+      decorator: airflow.decorators.task
+      task_name: test-test-definition
+      container_name: test-test-container
+    hello_world:
+      operator: airflow.providers.amazon.aws.operators.ecs.EcsRunTaskOperator
+      aws_conn_id: aws_default
+      awslogs_fetch_interval: 30.0
+      cluster: test-test-cluster
+      deferrable: false
+      launch_type: FARGATE
+      network_configuration:
+        awsvpcConfiguration:
+          subnets: [subnet-12345678, subnet-87654321]
+          securityGroups: [sg-12345678]
+          assignPublicIp: ENABLED
+      number_logs_exception: 10
+      outlets: []
+      overrides:
+        containerOverrides: [{name: test-test-container, command: [echo, hello, world]}]
+      params: {}
+      priority_weight: 1
+      reattach: false
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_definition: test-test-definition
+      task_id: hello_world
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 6
+      waiter_max_attempts: 1000000
+      dependencies: [register_task_definition]
+    await_task_finish:
+      operator: airflow.providers.amazon.aws.sensors.ecs.EcsTaskStateSensor
+      aws_conn_id: aws_default
+      cluster: test-test-cluster
+      failure_states: '{<EcsTaskStates.NONE: ''NONE''>}'
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      target_state: EcsTaskStates.STOPPED
+      task: '{{ task_instance.xcom_pull(task_ids=''hello_world'', key=''ecs_task_arn'')
+        }}'
+      task_id: await_task_finish
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [hello_world]
+    create_cluster:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_ecs_fargate.create_cluster
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_cluster
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      decorator: airflow.decorators.task
+      cluster_name: test-test-cluster
+    delete_task_definition:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_ecs_fargate.delete_task_definition
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_task_definition
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [register_task_definition, await_task_finish]
+      decorator: airflow.decorators.task
+      task_definition_arn: +register_task_definition
+    delete_cluster:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_ecs_fargate.delete_cluster
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_cluster
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_task_definition]
+      decorator: airflow.decorators.task
+      cluster_name: test-test-cluster

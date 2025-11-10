@@ -1,0 +1,69 @@
+dynamic_dag_marketing:
+  dag_id: dynamic_dag_marketing
+  params: {}
+  default_args:
+    owner: airflow
+    start_date: '2026-01-01'
+    retries: 1
+    retry_delay: 300.0
+  schedule: 0 3 * * ? *
+  tasks:
+    start:
+      operator: airflow.providers.standard.operators.bash.BashOperator
+      bash_command: echo 'Starting processing for marketing'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 1
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: start
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    process_campaigns:
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      op_args: []
+      op_kwargs:
+        data_source: /data/marketing/campaigns
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: dag_gen_config.process_data
+      retries: 1
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: process_campaigns
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [start]
+    process_analytics:
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      op_args: []
+      op_kwargs:
+        data_source: /data/marketing/analytics
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: dag_gen_config.process_data
+      retries: 1
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: process_analytics
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [start]
+    end:
+      operator: airflow.providers.standard.operators.bash.BashOperator
+      bash_command: echo 'Completed processing for marketing'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 1
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: end
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [process_campaigns, process_analytics]
+  description: Dynamically generated DAG for marketing

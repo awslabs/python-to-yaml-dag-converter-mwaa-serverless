@@ -1,0 +1,199 @@
+example_ec2:
+  dag_id: example_ec2
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    create_key_pair:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_ec2.create_key_pair
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_key_pair
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      decorator: airflow.decorators.task
+      key_name: test_key_pair
+    get_latest_ami_id:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_ec2.get_latest_ami_id
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: get_latest_ami_id
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_key_pair]
+      decorator: airflow.decorators.task
+    create_instance:
+      operator: airflow.providers.amazon.aws.operators.ec2.EC2CreateInstanceOperator
+      aws_conn_id: aws_default
+      config:
+        InstanceType: t3.micro
+        KeyName: '{{ task_instance.xcom_pull(task_ids=''create_key_pair'', key=''return_value'')
+          }}'
+        TagSpecifications: [{ResourceType: instance, Tags: [{Key: Name, Value: test-instance}]}]
+        MetadataOptions:
+          HttpEndpoint: enabled
+          HttpTokens: required
+        HibernationOptions:
+          Configured: true
+        BlockDeviceMappings: [{DeviceName: /dev/xvda, Ebs: {Encrypted: true, DeleteOnTermination: true}}]
+      image_id: '{{ task_instance.xcom_pull(task_ids=''get_latest_ami_id'', key=''return_value'')
+        }}'
+      max_attempts: 20
+      max_count: 1
+      min_count: 1
+      outlets: []
+      params: {}
+      poll_interval: 20
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_instance
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      dependencies: [get_latest_ami_id, create_key_pair]
+    parse_response:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_ec2.parse_response
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: parse_response
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_instance]
+      decorator: airflow.decorators.task
+      instance_ids: +create_instance
+    stop_instance:
+      operator: airflow.providers.amazon.aws.operators.ec2.EC2StopInstanceOperator
+      aws_conn_id: aws_default
+      check_interval: 15
+      instance_id: '{{ task_instance.xcom_pull(task_ids=''parse_response'', key=''return_value'')
+        }}'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: stop_instance
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [parse_response]
+    start_instance:
+      operator: airflow.providers.amazon.aws.operators.ec2.EC2StartInstanceOperator
+      aws_conn_id: aws_default
+      check_interval: 15
+      instance_id: '{{ task_instance.xcom_pull(task_ids=''parse_response'', key=''return_value'')
+        }}'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: start_instance
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [stop_instance, parse_response]
+    await_instance:
+      operator: airflow.providers.amazon.aws.sensors.ec2.EC2InstanceStateSensor
+      aws_conn_id: aws_default
+      deferrable: false
+      instance_id: '{{ task_instance.xcom_pull(task_ids=''parse_response'', key=''return_value'')
+        }}'
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      target_state: running
+      task_id: await_instance
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [parse_response, start_instance]
+    reboot_instace:
+      operator: airflow.providers.amazon.aws.operators.ec2.EC2RebootInstanceOperator
+      aws_conn_id: aws_default
+      instance_ids: '{{ task_instance.xcom_pull(task_ids=''parse_response'', key=''return_value'')
+        }}'
+      max_attempts: 20
+      outlets: []
+      params: {}
+      poll_interval: 20
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: reboot_instace
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      dependencies: [parse_response, await_instance]
+    hibernate_instace:
+      operator: airflow.providers.amazon.aws.operators.ec2.EC2HibernateInstanceOperator
+      aws_conn_id: aws_default
+      instance_ids: '{{ task_instance.xcom_pull(task_ids=''parse_response'', key=''return_value'')
+        }}'
+      max_attempts: 40
+      outlets: []
+      params: {}
+      poll_interval: 60
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: hibernate_instace
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      dependencies: [parse_response, reboot_instace]
+    terminate_instance:
+      operator: airflow.providers.amazon.aws.operators.ec2.EC2TerminateInstanceOperator
+      aws_conn_id: aws_default
+      instance_ids: '{{ task_instance.xcom_pull(task_ids=''parse_response'', key=''return_value'')
+        }}'
+      max_attempts: 20
+      outlets: []
+      params: {}
+      poll_interval: 20
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: terminate_instance
+      trigger_rule: all_done
+      wait_for_completion: true
+      wait_for_downstream: false
+      dependencies: [parse_response, hibernate_instace]
+    delete_key_pair:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_ec2.delete_key_pair
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_key_pair
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [terminate_instance, create_key_pair]
+      decorator: airflow.decorators.task
+      key_pair_id: +create_key_pair

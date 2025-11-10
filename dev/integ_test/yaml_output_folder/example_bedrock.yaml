@@ -1,0 +1,235 @@
+example_bedrock:
+  dag_id: example_bedrock
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    create_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-bedrock
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_bucket
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    upload_data:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
+      aws_conn_id: aws_default
+      data: '{"prompt": "what is AWS", "completion": "it''s Amazon Web Services"}'
+      encrypt: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replace: false
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: test-bedrock
+      s3_key: test/train.jsonl
+      task_id: upload_data
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_bucket]
+    invoke_llama:
+      operator: airflow.providers.amazon.aws.operators.bedrock.BedrockInvokeModelOperator
+      aws_conn_id: aws_default
+      input_data:
+        prompt: What color is an orange?
+      model_id: meta.llama3-8b-instruct-v1:0
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: invoke_llama
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [upload_data]
+    invoke_titan:
+      operator: airflow.providers.amazon.aws.operators.bedrock.BedrockInvokeModelOperator
+      aws_conn_id: aws_default
+      input_data:
+        inputText: What color is an orange?
+      model_id: amazon.titan-text-express-v1
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: invoke_titan
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [upload_data]
+    customize_model:
+      operator: airflow.providers.amazon.aws.operators.bedrock.BedrockCustomizeModelOperator
+      aws_conn_id: aws_default
+      base_model_id: arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-text-express-v1
+      custom_model_name: CustomModeltest
+      customization_job_kwargs: {}
+      deferrable: false
+      ensure_unique_job_name: true
+      hyperparameters:
+        epochCount: '1'
+        batchSize: '1'
+        learningRate: '.0005'
+        learningRateWarmupSteps: '0'
+      job_name: CustomizeModelJobtest
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      role_arn: test
+      task_id: customize_model
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      waiter_delay: 120
+      waiter_max_attempts: 75
+      training_data_uri: s3://test-bedrock/test/train.jsonl
+      output_data_uri: s3://test-bedrock/myOutputData
+      dependencies: [should_run_long_tasks]
+    await_custom_model_job:
+      operator: airflow.providers.amazon.aws.sensors.bedrock.BedrockCustomizeModelCompletedSensor
+      aws_conn_id: aws_default
+      deferrable: false
+      job_name: CustomizeModelJobtest
+      max_retries: 75
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 120
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: await_custom_model_job
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [customize_model]
+    provision_throughput:
+      operator: airflow.providers.amazon.aws.operators.bedrock.BedrockCreateProvisionedModelThroughputOperator
+      aws_conn_id: aws_default
+      create_throughput_kwargs: {}
+      deferrable: false
+      model_id: arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-text-express-v1:0:8k
+      model_units: 1
+      outlets: []
+      params: {}
+      priority_weight: 1
+      provisioned_model_name: ProvisionedModeltest
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: provision_throughput
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 20
+      dependencies: [should_run_provision_throughput]
+    await_provision_throughput:
+      operator: airflow.providers.amazon.aws.sensors.bedrock.BedrockProvisionModelThroughputCompletedSensor
+      aws_conn_id: aws_default
+      deferrable: false
+      max_retries: 20
+      mode: poke
+      model_id: '{{ task_instance.xcom_pull(task_ids=''provision_throughput'', key=''return_value'')
+        }}'
+      outlets: []
+      params: {}
+      poke_interval: 60
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: await_provision_throughput
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [provision_throughput]
+    delete_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-bedrock
+      force_delete: true
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_bucket
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_provision_throughput]
+    should_run_long_tasks:
+      operator: airflow.providers.standard.decorators.short_circuit._ShortCircuitDecoratedOperator
+      ignore_downstream_trigger_rules: true
+      op_args: []
+      op_kwargs: {}
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_bedrock.should_run_long_tasks
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: should_run_long_tasks
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [invoke_titan, invoke_llama]
+    delete_custom_model:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_bedrock.delete_custom_model
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_custom_model
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [await_custom_model_job]
+      decorator: airflow.decorators.task
+    should_run_provision_throughput:
+      operator: airflow.providers.standard.decorators.short_circuit._ShortCircuitDecoratedOperator
+      ignore_downstream_trigger_rules: true
+      op_args: []
+      op_kwargs: {}
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_bedrock.should_run_provision_throughput
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: should_run_provision_throughput
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [delete_custom_model]
+    delete_provision_throughput:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_bedrock.delete_provision_throughput
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_provision_throughput
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [provision_throughput, await_provision_throughput]
+      decorator: airflow.decorators.task
+      provisioned_model_id: +provision_throughput

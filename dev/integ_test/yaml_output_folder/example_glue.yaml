@@ -1,0 +1,214 @@
+example_glue:
+  dag_id: example_glue
+  params: {}
+  default_args:
+    start_date: '2026-07-15'
+  schedule: '@daily'
+  tasks:
+    create_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: py2yml-unique-id-112413-bucket
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_bucket
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    upload_csv:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
+      aws_conn_id: aws_default
+      data: |
+        product,value
+        apple,0.5
+        milk,2.5
+        bread,4.0
+      encrypt: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replace: true
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: py2yml-unique-id-112413-bucket
+      s3_key: input/category=mixed/input.csv
+      task_id: upload_csv
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - create_bucket
+    upload_script:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
+      aws_conn_id: aws_default
+      data: |2
+
+        from pyspark.context import SparkContext
+        from awsglue.context import GlueContext
+        glueContext = GlueContext(SparkContext.getOrCreate())
+        datasource = glueContext.create_dynamic_frame.from_catalog(
+                     database='py2yml-unique-id-112413_glue_db', table_name='input')
+        print('There are %s items in the table' % datasource.count())
+        datasource.toDF().write.format('csv').mode("append").save('s3://py2yml-unique-id-112413-bucket/output')
+      encrypt: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replace: true
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: py2yml-unique-id-112413-bucket
+      s3_key: etl_script.py
+      task_id: upload_script
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - upload_csv
+    crawl_s3:
+      operator: airflow.providers.amazon.aws.operators.glue_crawler.GlueCrawlerOperator
+      aws_conn_id: aws_default
+      config:
+        Name: py2yml-unique-id-112413_crawler
+        Role: arn:aws:iam::590183871800:role/WorkflowExecutionRole
+        DatabaseName: py2yml-unique-id-112413_glue_db
+        Targets:
+          S3Targets:
+          - Path: py2yml-unique-id-112413-bucket/input
+      deferrable: false
+      outlets: []
+      params: {}
+      poll_interval: 5
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: crawl_s3
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      dependencies:
+      - upload_script
+    wait_for_crawl:
+      operator: airflow.providers.amazon.aws.sensors.glue_crawler.GlueCrawlerSensor
+      aws_conn_id: aws_default
+      crawler_name: py2yml-unique-id-112413_crawler
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: wait_for_crawl
+      timeout: 500
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - crawl_s3
+    wait_for_catalog_partition:
+      operator: airflow.providers.amazon.aws.sensors.glue_catalog_partition.GlueCatalogPartitionSensor
+      aws_conn_id: aws_default
+      database_name: py2yml-unique-id-112413_glue_db
+      deferrable: false
+      expression: category='mixed'
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 180
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      table_name: input
+      task_id: wait_for_catalog_partition
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - wait_for_crawl
+    submit_glue_job:
+      operator: airflow.providers.amazon.aws.operators.glue.GlueJobOperator
+      aws_conn_id: aws_default
+      concurrent_run_limit: 1
+      create_job_kwargs:
+        GlueVersion: '3.0'
+        NumberOfWorkers: 2
+        WorkerType: G.1X
+      deferrable: false
+      iam_role_name: WorkflowExecutionRole
+      job_desc: AWS Glue Job with Airflow
+      job_name: py2yml-unique-id-112413_glue_job
+      job_poll_interval: 6
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replace_script_file: false
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      retry_limit: 0
+      run_job_kwargs: {}
+      s3_bucket: py2yml-unique-id-112413-bucket
+      script_args: {}
+      script_location: s3://py2yml-unique-id-112413-bucket/etl_script.py
+      sleep_before_return: 0
+      stop_job_run_on_kill: false
+      task_id: submit_glue_job
+      trigger_rule: all_success
+      update_config: false
+      verbose: false
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 75
+      dependencies:
+      - wait_for_catalog_partition
+    wait_for_job:
+      operator: airflow.providers.amazon.aws.sensors.glue.GlueJobSensor
+      aws_conn_id: aws_default
+      deferrable: false
+      job_name: py2yml-unique-id-112413_glue_job
+      max_retries: 60
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 5
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      run_id: '{{ task_instance.xcom_pull(task_ids=''submit_glue_job'', key=''return_value'')
+        }}'
+      task_id: wait_for_job
+      timeout: 604800.0
+      trigger_rule: all_success
+      verbose: true
+      wait_for_downstream: false
+      dependencies:
+      - submit_glue_job
+    delete_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: py2yml-unique-id-112413-bucket
+      force_delete: true
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_bucket
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies:
+      - wait_for_job
+  catchup: true
+  max_active_runs: 16
+  max_active_tasks: 16
+  max_consecutive_failed_dag_runs: 0

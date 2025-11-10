@@ -1,0 +1,117 @@
+example_appflow_run:
+  dag_id: example_appflow_run
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    create_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-for-appflow
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_bucket
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    upload_csv:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
+      aws_conn_id: aws_default
+      data: |
+        col1,col2
+        "data1","data2"
+      encrypt: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replace: true
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: test-for-appflow
+      s3_key: source_folder/data.csv
+      task_id: upload_csv
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [setup_bucket_permissions]
+    run_flow:
+      operator: airflow.providers.amazon.aws.operators.appflow.AppflowRunOperator
+      aws_conn_id: aws_default
+      flow_name: test-flow
+      max_attempts: 60
+      outlets: []
+      params: {}
+      poll_interval: 1
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: run_flow
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      dependencies: [create_s3_to_s3_flow]
+    delete_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-for-appflow
+      force_delete: true
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_bucket
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_flow]
+    setup_bucket_permissions:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_appflow_run.setup_bucket_permissions
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: setup_bucket_permissions
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_bucket]
+      decorator: airflow.decorators.task
+      bucket_name: test-for-appflow
+    create_s3_to_s3_flow:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_appflow_run.create_s3_to_s3_flow
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_s3_to_s3_flow
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [upload_csv]
+      decorator: airflow.decorators.task
+      flow_name: test-flow
+      bucket_name: test-for-appflow
+      source_folder: source
+    delete_flow:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_appflow_run.delete_flow
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_flow
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [run_flow]
+      decorator: airflow.decorators.task
+      flow_name: test-flow

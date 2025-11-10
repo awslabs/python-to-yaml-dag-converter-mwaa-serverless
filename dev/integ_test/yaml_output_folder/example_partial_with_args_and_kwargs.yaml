@@ -1,0 +1,54 @@
+example_partial_with_args_and_kwargs:
+  dag_id: example_partial_with_args_and_kwargs
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: 0 0 * * ? *
+  tasks:
+    get_items:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: dtm_taskflow_complex.get_items
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: get_items
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      decorator: airflow.decorators.task
+    process_item:
+      operator: airflow.providers.standard.decorators.python._PythonDecoratedOperator
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: dtm_taskflow_complex.process_item
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: process_item
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [get_items]
+      expand:
+        item: +get_items
+      partial:
+        op_kwargs:
+          prefix: item
+          capitalize: true
+        op_args: []
+    aggregate_results:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: dtm_taskflow_complex.aggregate_results
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: aggregate_results
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [process_item]
+      decorator: airflow.decorators.task
+      results: +process_item
