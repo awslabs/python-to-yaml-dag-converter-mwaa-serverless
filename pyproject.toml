@@ -1,0 +1,99 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "python-to-yaml-dag-converter-mwaa-serverless"
+dynamic = ["version"]
+description = "CLI tool that converts Python airflow DAGs to YAML DAGs for use with dagfactory"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: Apache Software License",
+    "Framework :: Apache Airflow",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "apache-airflow==3.0.6",
+    "apache-airflow-providers-amazon==9.10.0",
+    "apache-airflow-providers-cncf-kubernetes==10.6.1",
+    "boto3>=1.37.3",
+    "dag-factory==1.0.0",
+    "rich>=13.7.1,<15.0.0",
+    # Fastapi dependency issue https://github.com/apache/airflow/discussions/57769
+    "fastapi[standard]<0.118",
+]
+
+[project.scripts]
+dag-converter = "dag_converter.cli:app"
+
+[project.urls]
+Source = "https://github.com/awslabs/python-to-yaml-dag-converter-mwaa-serverless"
+Repository = "https://github.com/awslabs/python-to-yaml-dag-converter-mwaa-serverless.git"
+Issues = "https://github.com/awslabs/python-to-yaml-dag-converter-mwaa-serverless/issues"
+Changelog = "https://github.com/awslabs/python-to-yaml-dag-converter-mwaa-serverless/blob/main/CHANGELOG.md"
+Documentation = "https://github.com/awslabs/python-to-yaml-dag-converter-mwaa-serverless/blob/main/README.md"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+]
+lint = [
+    "ruff>=0.13.1",
+]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "dag_converter/",
+    "tests/"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [ "dag_converter" ]
+
+[tool.hatch.version]
+path = "dag_converter/__init__.py"
+
+[tool.hatch.envs.tests]
+dependencies = [
+  "coverage[toml]",
+  "pytest",
+  "pytest-cov",
+  "pytest-mock",
+]
+
+[[tool.hatch.envs.tests.matrix]]
+python = ["3.11", "3.12"]
+
+[tool.hatch.envs.dev.scripts]
+integ-test = 'sh scripts/integ-tests.sh'
+
+[tool.hatch.envs.tests.scripts]
+test = 'sh scripts/unit-tests.sh'
+test-cov = 'sh scripts/cov-unit-tests.sh'
+cov-combine = 'coverage combine'
+cov-report = 'coverage report'
+
+[tool.hatch.envs.hatch-test.scripts]
+run = 'sh scripts/unit-tests.sh'
+run-cov = 'sh scripts/cov-unit-tests.sh'
+cov-combine = 'coverage combine'
+cov-report = 'coverage report'
+
+[tool.black]
+line-length = 88
+target-version = ['py311', 'py312']
+
+## ruff
+[tool.ruff.lint]
+select = [ "E", "F", "UP", "B", "SIM", "I" ]
+
+[tool.ruff.lint.per-file-ignores]
+"dev/integ_test/python_test_folder/*" = ["ALL"]
+"tests/unit/samples/*" = ["ALL"]
+"tests/unit/*.py" = ["S101"]
+
+
