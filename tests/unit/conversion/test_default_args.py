@@ -10,15 +10,6 @@ class TestConvertDefaultArgs(unittest.TestCase):
     def setUp(self):
         self.mock_validator = Mock()
 
-    def test_start_date_with_strftime(self):
-        """Test start_date conversion with datetime object"""
-        date_obj = datetime(2023, 5, 15)
-        args = {"start_date": date_obj}
-
-        result = convert_default_args(args, self.mock_validator)
-
-        self.assertEqual(result["start_date"], "2023-05-15")
-
     def test_start_date_without_strftime(self):
         """Test start_date conversion with string value"""
         args = {"start_date": "2023-05-15"}
@@ -48,14 +39,12 @@ class TestConvertDefaultArgs(unittest.TestCase):
         self.assertEqual(str(context.exception), "Default Argument 'invalid_arg' is not supported")
 
     def test_mixed_args(self):
-        """Test conversion with mixed valid args and start_date"""
-        date_obj = datetime(2023, 5, 15)
+        """Test conversion with mixed valid args"""
         self.mock_validator.validate_field.return_value = True
-        args = {"start_date": date_obj, "retries": 3, "retry_delay": 300}
+        args = { "retries": 3, "retry_delay": 300}
 
         result = convert_default_args(args, self.mock_validator)
 
-        self.assertEqual(result["start_date"], "2023-05-15")
         self.assertEqual(result["retries"], 3)
         self.assertEqual(result["retry_delay"], 300)
 

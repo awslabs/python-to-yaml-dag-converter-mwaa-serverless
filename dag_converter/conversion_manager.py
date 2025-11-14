@@ -52,6 +52,7 @@ class ConversionManager:
 
         if total_errors > 0:
             print_error(f"Failed to convert {total_errors} out of {file_count} files from {dag_file_path}")
+            raise Exception("Conversion failed for { total_errors} out of {file_count} files from {dag_file_path ")
         else:
             print_success(f"Successfully converted {file_count} files from {dag_file_path}")
 
@@ -100,7 +101,7 @@ class ConversionManager:
             dag_cleaned = get_cleanup_dag(dag_formatted)
             dag_yaml = build_yaml(dag_cleaned)
 
-            # Validation with Dag Processor
+            # Validation with Dag Factory
             is_valid = True
             if user_validate:
                 print_progress("Validating YAML...")
@@ -148,7 +149,7 @@ class ConversionManager:
             dag_file_name (str): S3 file name
         """
         try:
-            print_progress(f"Attempting upload DAG YAML to s3://{self.s3_bucket}/{dag_file_name}")
+            print_progress(f"Attempting to upload DAG YAML to s3://{self.s3_bucket}/{dag_file_name}")
             self.s3_client.upload_file(output_path, self.s3_bucket, dag_file_name)
 
             print_success(f"Successfully uploaded DAG YAML to s3://{self.s3_bucket}/{dag_file_name}")

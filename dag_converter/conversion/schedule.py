@@ -17,7 +17,6 @@ def convert_schedule(dag_object: DAG) -> str | None:
     elif isinstance(schedule, CronTriggerTimetable):
         return schedule._expression
     elif isinstance(schedule, timedelta):
-        schedule.total_seconds()
         raise InvalidSchedule(f"Time delta based schedule is not supported: {schedule}")
 
     raise InvalidSchedule(f"Schedule is not valid: {schedule}")

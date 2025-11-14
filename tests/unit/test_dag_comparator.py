@@ -149,4 +149,4 @@ class TestDagComparator(unittest.TestCase):
 
         differences = compare_dags(dag1, dag2)
         self.assertIn("DAG_STRUCTURE", differences)
-        self.assertTrue(any("Tasks missing in final DAG: {'task1'}" in diff for diff in differences["DAG_STRUCTURE"]))
+        self.assertTrue(any("Tasks missing in final Dag: {'task1'}" in diff for diff in differences["DAG_STRUCTURE"]))

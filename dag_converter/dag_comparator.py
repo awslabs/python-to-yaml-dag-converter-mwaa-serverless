@@ -146,7 +146,7 @@ def compare_task_attributes(task_initial: Any, task_final: Any, task_id: str) ->
 
 
 def compare_dags(dag_initial: DAG, dag_final: DAG) -> dict[str, list[str]]:
-    """Compare two DAG objects and their tasks"""
+    """Compare two Dag objects and their tasks"""
     # Dictionary to store differences by task
     differences_by_task = {}
 
@@ -162,11 +162,11 @@ def compare_dags(dag_initial: DAG, dag_final: DAG) -> dict[str, list[str]]:
     missing_in_initial = task_ids_final - task_ids_initial
 
     if missing_in_final:
-        differences_by_task["DAG_STRUCTURE"] = [f"Tasks missing in final DAG: {missing_in_final}"]
+        differences_by_task["DAG_STRUCTURE"] = [f"Tasks missing in final Dag: {missing_in_final}"]
     if missing_in_initial:
         if "DAG_STRUCTURE" not in differences_by_task:
             differences_by_task["DAG_STRUCTURE"] = []
-        differences_by_task["DAG_STRUCTURE"].append(f"Tasks missing in initial DAG: {missing_in_initial}")
+        differences_by_task["DAG_STRUCTURE"].append(f"Tasks missing in initial Dag: {missing_in_initial}")
 
     # Compare common tasks
     common_tasks = task_ids_initial & task_ids_final

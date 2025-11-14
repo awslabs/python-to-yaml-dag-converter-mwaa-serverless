@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "python-to-yaml-dag-converter-mwaa-serverless"
 dynamic = ["version"]
-description = "CLI tool that converts Python airflow DAGs to YAML DAGs for use with dagfactory"
+description = "CLI tool that converts Python airflow Dags to YAML Dags for use with dagfactory"
 readme = "README.md"
 requires-python = ">=3.10"
 classifiers = [
@@ -56,6 +56,12 @@ packages = [ "dag_converter" ]
 
 [tool.hatch.version]
 path = "dag_converter/__init__.py"
+
+## Integ Tests
+[tool.hatch.envs.dev]
+dependencies = [
+    "opensearch-py==3.0.0"
+]
 
 [tool.hatch.envs.tests]
 dependencies = [

@@ -31,7 +31,7 @@ class TestCli(unittest.TestCase):
         """Test that the convert command shows help information."""
         result = runner.invoke(app, ["convert", "--help"])
         self.assertEqual(result.exit_code, 0)
-        self.assertIn("Loads Python DAGs from input and converts them to YAML DAGs", result.stdout)
+        self.assertIn("Loads Python Dags from input and converts them to YAML Dags", result.stdout)
         self.assertIn("INPUT_PATH", result.stdout)
         self.assertIn("--output", result.stdout)
         self.assertIn("--bucket", result.stdout)

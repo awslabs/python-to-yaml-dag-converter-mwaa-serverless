@@ -23,11 +23,14 @@ def validate_yaml_with_dagbag(initial_dag_object: DAG | None, dag_yaml: str, inp
                 with open(yaml_path, "w") as f:
                     f.write(str(dag_yaml))
 
-                # Use unique module name to avoid caching issues
+                # Use new temporary directory to avoid caching issues
                 loader_path = dags_dir / "load_yaml_dags.py"
                 # Get the path to python_input directory
                 python_input_dir = input_file_path.parent
 
+                # Writes loader script for dag-factory. Loader script for each yaml is
+                # required in order to load converted YAML into Python DAG object for
+                # validation. https://www.astronomer.io/docs/learn/dag-factory#step-5-implement-the-generator-script
                 with open(loader_path, "w") as f:
                     f.write(f"""
 import os

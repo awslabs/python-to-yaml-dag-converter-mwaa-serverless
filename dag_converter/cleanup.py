@@ -20,10 +20,10 @@ def get_cleanup_dag(obj: Any) -> Any:
 
     The function handles:
     - Encoded values with __var and __type
-    - Basic Python containers (dict, list, tuple)
+    - Basic Python containers (dict, list, tuple, set)
     - Custom objects (converted to Dag factory YAML object format)
     - Enums (converted to Dag factory YAML object format)
-    - Date/time objects (converted to ISO format)
+    - Date/time objects (converted to custom Python object)
     - None values
     - Nested structures
     """
@@ -67,11 +67,21 @@ def get_cleanup_dag(obj: Any) -> Any:
         # Regular dictionary
         return {k: get_cleanup_dag(v) for k, v in obj.items()}
 
-    if isinstance(obj, list | tuple):
+    if isinstance(obj, list | tuple | set):
         return [get_cleanup_dag(item) for item in obj]
 
     if isinstance(obj, datetime):
-        return obj.isoformat(timespec="seconds")
+        custom_object = {
+            "__type__": "datetime.datetime",
+            "year": obj.year,
+            "month": obj.month,
+            "day": obj.day,
+            "hour": obj.hour,
+            "minute": obj.minute,
+            "second": obj.second,
+            "microsecond": obj.microsecond
+        }
+        return { key: value for key, value in custom_object.items() if value }
 
     if isinstance(obj, date):
         return obj.isoformat()
