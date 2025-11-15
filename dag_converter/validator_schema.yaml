@@ -134,7 +134,6 @@ task:
   operator:
     enum(
     "airflow.operators.empty.EmptyOperator",
-    "workflows.airflow.providers.amazon.aws.operators.sagemaker_workflows.NotebookOperator",
     "airflow.providers.amazon.aws.operators.athena.AthenaOperator",
     "airflow.providers.amazon.aws.operators.emr.EmrAddStepsOperator",
     "airflow.providers.amazon.aws.operators.emr.EmrStartNotebookExecutionOperator",
