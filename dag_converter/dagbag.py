@@ -5,7 +5,7 @@ from airflow.models.dagbag import DagBag
 
 
 def get_dag_object(dag_file_path: Path) -> list[DAG]:
-    """Load the Dags using DagBag and retrieve the Dag objects"""
+    """Load the Dags using DagBag and retrieve the Dag objects. Dummy change"""
     dagbag = DagBag(dag_folder=dag_file_path, include_examples=False)
     found_dags = []
     for dag in dagbag.dags.values():
