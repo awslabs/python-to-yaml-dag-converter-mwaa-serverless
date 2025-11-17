@@ -1,0 +1,1056 @@
+map(include('dag'))
+---
+dag:
+  dag_id: str(regex('^[a-zA-Z0-9\\-\\._]+$'))
+  description: str(required=False)
+  doc_md: str(required=False)
+  tags: list(str(), required=False)
+  default_args: map(key=enum("owner", "email", "retries", "retry_delay", "priority_weight", "end_date", "wait_for_downstream", "execution_timeout", "trigger_rule", "start_date", "depends_on_past", "email_on_failure", "email_on_retry"), required=False, none=True)
+  params: map(str(), str(), required=False, none=True)
+  dagrun_timeout: int(required=False)
+  fail_stop: bool(required=False)
+  user_defined_macros: map(any(), any(), required=False, none=True)
+  tasks: map(include('task', none=True), required=False)
+  schedule_interval: str(required=False)
+  schedule: str(required=False)
+  python_version: any(required=False)
+  is_paused_upon_creation: bool(required=False)
+  start_date: any(required=False)
+  end_date: any(required=False)
+  catchup: bool(required=False)
+  max_active_tasks: int(required=False)
+  max_active_runs : int(required=False)
+  max_consecutive_failed_dag_runs: int(required=False)
+  template_searchpath: list(str(), required=False)
+  template_undefined: any(required=False)
+  render_template_as_native_obj: bool(required=False)
+  user_defined_macros: any(required=False)
+  user_defined_filters: any(required=False)
+  dagrun_timeout: int(required=False)
+  has_serialized_dag: bool(required=False)
+  one_success_callback: any(required=False)
+  one_failure_callback: any(required=False)
+  access_control: any(required=False)
+  auto_register: bool(required=False)
+  fail_fast: bool(required=False)
+  dag_display_name: str(required=False)
+  jinja_environment_kwargs: any(required=False)
+  owner_links: any(required=False)
+  auto_register: bool(required=False)
+  email_on_failure: bool(required=False)
+  email_on_retry: bool(required=False)
+  depends_on_past: bool(required=False)
+---
+task:
+  task_id: str(required=False)
+  retries: int(required=False)
+  retry_delay: str(required=False)
+  retry_exponential_backoff: bool(required=False)
+  max_retry_delay: str(required=False)
+  wait_for_downstream: bool(required=False)
+  priority_weight: int(required=False)
+  weight_rule: enum("absolute", "downstream", "upstream", required=False)
+  execution_timeout: int(required=False)
+  trigger_rule: enum("all_success", "all_failed", "all_done", "one_success", "one_failed", "none_failed", "none_failed_or_skipped", "none_skipped", "dummy", required=False)
+  end_date: any(required=False)
+  start_date: any(required=False)
+  resources: map(str(), str(), required=False, none=True)
+  params: map(str(), str(), required=False, none=True)
+  fail_stop: bool(required=False)
+  outlets: list(str(), required=False)
+  deferrable-operators: bool(required=False)
+  python_callable: str(required=False)
+  python_callable_file: str(required=False)
+  python_callable_name: str(required=False)
+  external_dag_id: str(required=False)
+  external_task_id: str(required=False)
+  bash_command: str(required=False)
+  input_config: any(required=False)
+  output_config: any(required=False)
+  wait_for_completion: bool(required=False)
+  poll_interval: int(required=False)
+  bucket: str(required=False)
+  job_name: str(required=False)
+  script_location: str(required=False)
+  s3_bucket: str(required=False)
+  iam_role_name: str(required=False)
+  region_name: str(required=False)
+  create_job_kwargs: any(required=False)
+  bucket_name: str(required=False)
+  replace: any(required=False)
+  data: any(required=False)
+  s3_key: str(required=False)
+  job_desc: str(required=False)
+  run_id: any(required=False)
+  prefix: str(required=False)
+  script_args: any(required=False)
+  op_args: any(required=False)
+  op_kwargs: any(required=False)
+  keys: any(required=False)
+  source_bucket_name: str(required=False)
+  dest_bucket_name: str(required=False)
+  source_bucket_key: str(required=False)
+  dest_bucket_key: str(required=False)
+  source_s3_key: str(required=False)
+  dest_s3_key: str(required=False)
+  transform_script: str(required=False)
+  delimiter: str(required=False)
+  force_delete: bool(required=False)
+  key: str(required=False)
+  value: str(required=False)
+  bucket_key: any(required=False)
+  check_fn: any(required=False)
+  use_regex: bool(required=False)
+  inactivity_period: int(required=False)
+  poke_interval: int(required=False)
+  timeout: int(required=False)
+  mode: str(required=False)
+  aws_conn_id: str(required=False)
+  verify: bool(required=False)
+  verify_ssl: bool(required=False)
+  hook_params: any(required=False)
+  deferrable: bool(required=False)
+  # EC2 operator parameters
+  instance_id: str(required=False)
+  instance_ids: any(required=False)
+  max_count: int(required=False)
+  min_count: int(required=False)
+  image_id: str(required=False)
+  config: map(required=False)
+  target_state: str(required=False)
+  max_attempts: int(required=False)
+  value: any(required=False)
+  values: any(required=False)
+  map_index_template: any(required=False)
+  config: any(required=False)
+  crawler_name: str(required=False)
+  database_name: str(required=False)
+  expression: str(required=False)
+  table_name: str(required=False)
+  verbose: bool(required=False)
+  database: any(required=False)
+  output_location: str(required=False)
+  sleep_time: int(required=False)
+  operator:
+    enum(
+    "airflow.operators.empty.EmptyOperator",
+    "airflow.providers.amazon.aws.operators.athena.AthenaOperator",
+    "airflow.providers.amazon.aws.operators.emr.EmrAddStepsOperator",
+    "airflow.providers.amazon.aws.operators.emr.EmrStartNotebookExecutionOperator",
+    "airflow.providers.amazon.aws.operators.emr.EmrStopNotebookExecutionOperator",
+    "airflow.providers.amazon.aws.operators.emr.EmrEksCreateClusterOperator",
+    "airflow.providers.amazon.aws.operators.emr.EmrContainerOperator",
+    "airflow.providers.amazon.aws.operators.emr.EmrCreateJobFlowOperator",
+    "airflow.providers.amazon.aws.operators.emr.EmrModifyClusterOperator",
+    "airflow.providers.amazon.aws.operators.emr.EmrTerminateJobFlowOperator",
+    "airflow.providers.amazon.aws.operators.emr.EmrServerlessCreateApplicationOperator",
+    "airflow.providers.amazon.aws.operators.emr.EmrServerlessStartJobOperator",
+    "airflow.providers.amazon.aws.operators.emr.EmrServerlessStopApplicationOperator",
+    "airflow.providers.amazon.aws.operators.emr.EmrServerlessDeleteApplicationOperator",
+    "airflow.providers.amazon.aws.operators.redshift_cluster.RedshiftCreateClusterSnapshotOperator",
+    "airflow.providers.amazon.aws.operators.redshift_cluster.RedshiftDeleteClusterSnapshotOperator",
+    "airflow.providers.amazon.aws.operators.redshift_cluster.RedshiftResumeClusterOperator",
+    "airflow.providers.amazon.aws.operators.redshift_cluster.RedshiftPauseClusterOperator",
+    "airflow.providers.amazon.aws.operators.redshift_cluster.RedshiftDeleteClusterOperator",
+    "airflow.providers.amazon.aws.operators.redshift_cluster.RedshiftCreateClusterOperator",
+    "airflow.providers.amazon.aws.operators.redshift_data.RedshiftDataOperator",
+    "airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator",
+    "airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator",
+    "airflow.providers.amazon.aws.operators.s3.S3GetBucketTaggingOperator",
+    "airflow.providers.amazon.aws.operators.s3.S3PutBucketTaggingOperator",
+    "airflow.providers.amazon.aws.operators.s3.S3DeleteBucketTaggingOperator",
+    "airflow.providers.amazon.aws.operators.s3.S3CopyObjectOperator",
+    "airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator",
+    "airflow.providers.amazon.aws.operators.s3.S3DeleteObjectsOperator",
+    "airflow.providers.amazon.aws.operators.s3.S3FileTransformOperator",
+    "airflow.providers.amazon.aws.operators.s3.S3ListOperator",
+    "airflow.providers.amazon.aws.operators.s3.S3ListPrefixesOperator",
+    "airflow.providers.amazon.aws.operators.appflow.AppflowBaseOperator",
+    "airflow.providers.amazon.aws.operators.appflow.AppflowRunOperator",
+    "airflow.providers.amazon.aws.operators.appflow.AppflowRunFullOperator",
+    "airflow.providers.amazon.aws.operators.appflow.AppflowRunBeforeOperator",
+    "airflow.providers.amazon.aws.operators.appflow.AppflowRunAfterOperator",
+    "airflow.providers.amazon.aws.operators.appflow.AppflowRunDailyOperator",
+    "airflow.providers.amazon.aws.operators.appflow.AppflowRecordsShortCircuitOperator",
+    "airflow.providers.amazon.aws.operators.batch.BatchOperator",
+    "airflow.providers.amazon.aws.operators.batch.BatchCreateComputeEnvironmentOperator",
+    "airflow.providers.amazon.aws.operators.bedrock.BedrockInvokeModelOperator",
+    "airflow.providers.amazon.aws.operators.bedrock.BedrockCustomizeModelOperator",
+    "airflow.providers.amazon.aws.operators.bedrock.BedrockCreateProvisionedModelThroughputOperator",
+    "airflow.providers.amazon.aws.operators.bedrock.BedrockCreateKnowledgeBaseOperator",
+    "airflow.providers.amazon.aws.operators.bedrock.BedrockCreateDataSourceOperator",
+    "airflow.providers.amazon.aws.operators.bedrock.BedrockIngestDataOperator",
+    "airflow.providers.amazon.aws.operators.bedrock.BedrockRaGOperator",
+    "airflow.providers.amazon.aws.operators.bedrock.BedrockRetrieveOperator",
+    "airflow.providers.amazon.aws.operators.bedrock.BedrockBatchInferenceOperator",
+    "airflow.providers.amazon.aws.operators.cloud_formation.CloudFormationCreateStackOperator",
+    "airflow.providers.amazon.aws.operators.cloud_formation.CloudFormationDeleteStackOperator",
+    "airflow.providers.amazon.aws.operators.comprehend.ComprehendBaseOperator",
+    "airflow.providers.amazon.aws.operators.comprehend.ComprehendStartPiiEntitiesDetectionJobOperator",
+    "airflow.providers.amazon.aws.operators.comprehend.ComprehendCreateDocumentClassifierOperator",
+    "airflow.providers.amazon.aws.operators.datasync.DataSyncOperator",
+    "airflow.providers.amazon.aws.operators.dms.DmsCreateTaskOperator",
+    "airflow.providers.amazon.aws.operators.dms.DmsDeleteTaskOperator",
+    "airflow.providers.amazon.aws.operators.dms.DmsDescribeTasksOperator",
+    "airflow.providers.amazon.aws.operators.dms.DmsStartTaskOperator",
+    "airflow.providers.amazon.aws.operators.dms.DmsStopTaskOperator",
+    "airflow.providers.amazon.aws.operators.dms.DmsCreateReplicationConfigOperator",
+    "airflow.providers.amazon.aws.operators.dms.DmsDescribeReplicationsOperator",
+    "airflow.providers.amazon.aws.operators.dms.DmsDeleteReplicationConfigOperator",
+    "airflow.providers.amazon.aws.operators.dms.DmsDescribeReplicationConfigsOperator",
+    "airflow.providers.amazon.aws.transfers.dynamodb_to_s3.DynamoDBToS3Operator"
+    "airflow.providers.amazon.aws.operators.ec2.EC2StartInstanceOperator",
+    "airflow.providers.amazon.aws.operators.ec2.EC2StopInstanceOperator",
+    "airflow.providers.amazon.aws.operators.ec2.EC2CreateInstanceOperator",
+    "airflow.providers.amazon.aws.operators.ec2.EC2TerminateInstanceOperator",
+    "airflow.providers.amazon.aws.operators.ec2.EC2RebootInstanceOperator",
+    "airflow.providers.amazon.aws.operators.ec2.EC2HibernateInstanceOperator",
+    "airflow.providers.amazon.aws.operators.ecs.EcsBaseOperator",
+    "airflow.providers.amazon.aws.operators.ecs.EcsCreateClusterOperator",
+    "airflow.providers.amazon.aws.operators.ecs.EcsDeleteClusterOperator",
+    "airflow.providers.amazon.aws.operators.ecs.EcsDeregisterTaskDefinitionOperator",
+    "airflow.providers.amazon.aws.operators.ecs.EcsRegisterTaskDefinitionOperator",
+    "airflow.providers.amazon.aws.operators.ecs.EcsRunTaskOperator",
+    "airflow.providers.amazon.aws.operators.eks.EksCreateClusterOperator",
+    "airflow.providers.amazon.aws.operators.eks.EksCreateNodegroupOperator",
+    "airflow.providers.amazon.aws.operators.eks.EksCreateFargateProfileOperator",
+    "airflow.providers.amazon.aws.operators.eks.EksDeleteClusterOperator",
+    "airflow.providers.amazon.aws.operators.eks.EksDeleteNodegroupOperator",
+    "airflow.providers.amazon.aws.operators.eks.EksDeleteFargateProfileOperator",
+    "airflow.providers.amazon.aws.operators.eks.EksPodOperator",
+    "airflow.providers.amazon.aws.operators.eventbridge.EventBridgePutEventsOperator",
+    "airflow.providers.amazon.aws.operators.eventbridge.EventBridgePutRuleOperator",
+    "airflow.providers.amazon.aws.operators.eventbridge.EventBridgeEnableRuleOperator",
+    "airflow.providers.amazon.aws.operators.eventbridge.EventBridgeDisableRuleOperator",
+    "airflow.providers.amazon.aws.operators.glacier.GlacierCreateJobOperator",
+    "airflow.providers.amazon.aws.operators.glacier.GlacierUploadArchiveOperator",
+    "airflow.providers.amazon.aws.operators.glue.GlueJobOperator",
+    "airflow.providers.amazon.aws.operators.glue.GlueDataQualityOperator",
+    "airflow.providers.amazon.aws.operators.glue.GlueDataQualityRuleSetEvaluationRunOperator",
+    "airflow.providers.amazon.aws.operators.glue.GlueDataQualityRuleRecommendationRunOperator",
+    "airflow.providers.amazon.aws.operators.glue_databrew.GlueDataBrewStartJobOperator",
+    "airflow.providers.amazon.aws.operators.glue_crawler.GlueCrawlerOperator",
+    "airflow.providers.amazon.aws.operators.kinesis_analytics.KinesisAnalyticsV2CreateApplicationOperator",
+    "airflow.providers.amazon.aws.operators.kinesis_analytics.KinesisAnalyticsV2StartApplicationOperator",
+    "airflow.providers.amazon.aws.operators.kinesis_analytics.KinesisAnalyticsV2StopApplicationOperator",
+    "airflow.providers.amazon.aws.operators.lambda_function.LambdaCreateFunctionOperator",
+    "airflow.providers.amazon.aws.operators.lambda_function.LambdaInvokeFunctionOperator",
+    "airflow.providers.amazon.aws.operators.neptune.NeptuneStartDbClusterOperator",
+    "airflow.providers.amazon.aws.operators.neptune.NeptuneStopDbClusterOperator",
+    "airflow.providers.amazon.aws.operators.quicksight.QuickSightCreateIngestionOperator",
+    "airflow.providers.amazon.aws.operators.rds.RdsBaseOperator",
+    "airflow.providers.amazon.aws.operators.rds.RdsCreateDbSnapshotOperator",
+    "airflow.providers.amazon.aws.operators.rds.RdsCopyDbSnapshotOperator",
+    "airflow.providers.amazon.aws.operators.rds.RdsDeleteDbSnapshotOperator",
+    "airflow.providers.amazon.aws.operators.rds.RdsStartExportTaskOperator",
+    "airflow.providers.amazon.aws.operators.rds.RdsCancelExportTaskOperator",
+    "airflow.providers.amazon.aws.operators.rds.RdsCreateEventSubscriptionOperator",
+    "airflow.providers.amazon.aws.operators.rds.RdsDeleteEventSubscriptionOperator",
+    "airflow.providers.amazon.aws.operators.rds.RdsCreateDbInstanceOperator",
+    "airflow.providers.amazon.aws.operators.rds.RdsDeleteDbInstanceOperator",
+    "airflow.providers.amazon.aws.operators.rds.RdsStartDbOperator",
+    "airflow.providers.amazon.aws.operators.rds.RdsStopDbOperator",
+    "airflow.providers.amazon.aws.operators.sagemaker.SageMakerBaseOperator",
+    "airflow.providers.amazon.aws.operators.sagemaker.SageMakerProcessingOperator",
+    "airflow.providers.amazon.aws.operators.sagemaker.SageMakerEndpointConfigOperator",
+    "airflow.providers.amazon.aws.operators.sagemaker.SageMakerEndpointOperator",
+    "airflow.providers.amazon.aws.operators.sagemaker.SageMakerTransformOperator",
+    "airflow.providers.amazon.aws.operators.sagemaker.SageMakerTuningOperator",
+    "airflow.providers.amazon.aws.operators.sagemaker.SageMakerModelOperator",
+    "airflow.providers.amazon.aws.operators.sagemaker.SageMakerTrainingOperator",
+    "airflow.providers.amazon.aws.operators.sagemaker.SageMakerDeleteModelOperator",
+    "airflow.providers.amazon.aws.operators.sagemaker.SageMakerStartPipelineOperator",
+    "airflow.providers.amazon.aws.operators.sagemaker.SageMakerStopPipelineOperator",
+    "airflow.providers.amazon.aws.operators.sagemaker.SageMakerRegisterModelVersionOperator",
+    "airflow.providers.amazon.aws.operators.sagemaker.SageMakerAutoMLOperator",
+    "airflow.providers.amazon.aws.operators.sagemaker.SageMakerCreateExperimentOperator",
+    "airflow.providers.amazon.aws.operators.sagemaker.SageMakerCreateNotebookOperator",
+    "airflow.providers.amazon.aws.operators.sagemaker.SageMakerStopNotebookOperator",
+    "airflow.providers.amazon.aws.operators.sagemaker.SageMakerDeleteNotebookOperator",
+    "airflow.providers.amazon.aws.operators.sagemaker.SageMakerStartNoteBookOperator",
+    "airflow.providers.amazon.aws.operators.sns.SnsPublishOperator",
+    "airflow.providers.amazon.aws.operators.sqs.SqsPublishOperator",
+    "airflow.providers.amazon.aws.operators.step_function.StepFunctionStartExecutionOperator",
+    "airflow.providers.amazon.aws.operators.step_function.StepFunctionGetExecutionOutputOperator",
+    "airflow.providers.amazon.aws.operators.MaxDomeNotebookOperator",
+    "airflow.providers.amazon.aws.operators.MaxDomeSQLOperator",
+    "airflow.providers.amazon.aws.operators.MaxDomeSparkOperator",
+    "airflow.providers.amazon.aws.operators.MaxdomeArtifactsOperator",
+    "airflow.providers.amazon.aws.sensors.athena.AthenaSensor",
+    "airflow.providers.amazon.aws.sensors.base_aws.AwsBaseSensor",
+    "airflow.providers.amazon.aws.sensors.batch.BatchSensor",
+    "airflow.providers.amazon.aws.sensors.batch.BatchComputeEnvironmentSensor",
+    "airflow.providers.amazon.aws.sensors.batch.BatchJobQueueSensor",
+    "airflow.providers.amazon.aws.sensors.bedrock.BedrockBaseSensor",
+    "airflow.providers.amazon.aws.sensors.bedrock.BedrockBatchInferenceSensor",
+    "airflow.providers.amazon.aws.sensors.bedrock.BedrockCustomizeModelCompletedSensor",
+    "airflow.providers.amazon.aws.sensors.bedrock.BedrockProvisionModelThroughputCompletedSensor",
+    "airflow.providers.amazon.aws.sensors.bedrock.BedrockKnowledgeBaseActiveSensor",
+    "airflow.providers.amazon.aws.sensors.bedrock.BedrockIngestionJobSensor",
+    "airflow.providers.amazon.aws.sensors.cloud_formation.CloudFormationCreateStackSensor",
+    "airflow.providers.amazon.aws.sensors.cloud_formation.CloudFormationDeleteStackSensor",
+    "airflow.providers.amazon.aws.sensors.comprehend.ComprehendBaseSensor",
+    "airflow.providers.amazon.aws.sensors.comprehend.ComprehendStartPiiEntitiesDetectionJobCompletedSensor",
+    "airflow.providers.amazon.aws.sensors.comprehend.ComprehendCreateDocumentClassifierCompletedSensor",
+    "airflow.providers.amazon.aws.sensors.dms.DmsTaskBaseSensor",
+    "airflow.providers.amazon.aws.sensors.dms.DmsTaskCompletedSensor",
+    "airflow.providers.amazon.aws.sensors.dynamodb.DynamoDBValueSensor",
+    "airflow.providers.amazon.aws.sensors.ec2.EC2InstanceStateSensor",
+    "airflow.providers.amazon.aws.sensors.ecs.EcsBaseSensor",
+    "airflow.providers.amazon.aws.sensors.ecs.EcsClusterStateSensor",
+    "airflow.providers.amazon.aws.sensors.ecs.EcsTaskDefinitionStateSensor",
+    "airflow.providers.amazon.aws.sensors.ecs.EcsTaskStateSensor",
+    "airflow.providers.amazon.aws.sensors.eks.EksBaseSensor",
+    "airflow.providers.amazon.aws.sensors.eks.EksClusterStateSensor",
+    "airflow.providers.amazon.aws.sensors.eks.EksFargateProfileStateSensor",
+    "airflow.providers.amazon.aws.sensors.eks.EksNodegroupStateSensor",
+    "airflow.providers.amazon.aws.sensors.emr.EmrBaseSensor",
+    "airflow.providers.amazon.aws.sensors.emr.EmrServerlessJobSensor",
+    "airflow.providers.amazon.aws.sensors.emr.EmrServerlessApplicationSensor",
+    "airflow.providers.amazon.aws.sensors.emr.EmrContainerSensor",
+    "airflow.providers.amazon.aws.sensors.emr.EmrNotebookExecutionSensor",
+    "airflow.providers.amazon.aws.sensors.emr.EmrJobFlowSensor",
+    "airflow.providers.amazon.aws.sensors.emr.EmrStepSensor",
+    "airflow.providers.amazon.aws.sensors.glacier.GlacierJobOperationSensor",
+    "airflow.providers.amazon.aws.sensors.glue.GlueJobSensor",
+    "airflow.providers.amazon.aws.sensors.glue.GlueDataQualityRuleSetEvaluationRunSensor",
+    "airflow.providers.amazon.aws.sensors.glue.GlueDataQualityRuleRecommendationRunSensor",
+    "airflow.providers.amazon.aws.sensors.glue_catalog_partition.GlueCatalogPartitionSensor",
+    "airflow.providers.amazon.aws.sensors.glue_crawler.GlueCrawlerSensor",
+    "airflow.providers.amazon.aws.sensors.kinesis_analytics.KinesisAnalyticsV2BaseSensor",
+    "airflow.providers.amazon.aws.sensors.kinesis_analytics.KinesisAnalyticsV2StartApplicationCompletedSensor",
+    "airflow.providers.amazon.aws.sensors.kinesis_analytics.KinesisAnalyticsV2StopApplicationCompletedSensor",
+    "airflow.providers.amazon.aws.sensors.lambda_function.LambdaFunctionStateSensor",
+    "airflow.providers.amazon.aws.sensors.opensearch_serverless.OpenSearchServerlessCollectionActiveSensor",
+    "airflow.providers.amazon.aws.sensors.quicksight.QuickSightSensor",
+    "airflow.providers.amazon.aws.sensors.rds.RdsBaseSensor",
+    "airflow.providers.amazon.aws.sensors.rds.RdsSnapshotExistenceSensor",
+    "airflow.providers.amazon.aws.sensors.rds.RdsExportTaskExistenceSensor",
+    "airflow.providers.amazon.aws.sensors.rds.RdsDbSensor",
+    "airflow.providers.amazon.aws.sensors.redshift_cluster.RedshiftClusterSensor",
+    "airflow.providers.amazon.aws.sensors.s3.S3KeySensor",
+    "airflow.providers.amazon.aws.sensors.s3.S3KeysUnchangedSensor",
+    "airflow.providers.amazon.aws.sensors.sagemaker.SageMakerBaseSensor",
+    "airflow.providers.amazon.aws.sensors.sagemaker.SageMakerEndpointSensor",
+    "airflow.providers.amazon.aws.sensors.sagemaker.SageMakerTransformSensor",
+    "airflow.providers.amazon.aws.sensors.sagemaker.SageMakerTuningSensor",
+    "airflow.providers.amazon.aws.sensors.sagemaker.SageMakerTrainingSensor",
+    "airflow.providers.amazon.aws.sensors.sagemaker.SageMakerPipelineSensor",
+    "airflow.providers.amazon.aws.sensors.sagemaker.SageMakerAutoMLSensor",
+    "airflow.providers.amazon.aws.sensors.sqs.SqsSensor",
+    "airflow.providers.amazon.aws.sensors.step_function.StepFunctionExecutionSensor",
+    "airflow.providers.amazon.aws.sensors.MaxdomeNotebookSensor",
+    "airflow.providers.amazon.aws.sensors.MaxDomeSQLSensor",
+    "airflow.providers.amazon.aws.sensors.MaxDomeSparkSensor",
+    "airflow.providers.standard.operators.empty.EmptyOperator",
+    "airflow.providers.amazon.aws.transfers.http_to_s3.HttpToS3Operator",
+    "airflow.providers.amazon.aws.sensors.sagemaker.SageMakerProcessingSensor",
+    "airflow.providers.amazon.aws.sensors.mwaa.MwaaDagRunSensor",
+    "airflow.providers.amazon.aws.transfers.redshift_to_s3.RedshiftToS3Operator",
+    "airflow.providers.amazon.aws.transfers.sql_to_s3.SqlToS3Operator",
+    "airflow.providers.amazon.aws.transfers.local_to_s3.LocalFilesystemToS3Operator",
+    "airflow.providers.amazon.aws.operators.sagemaker_unified_studio.SageMakerNotebookOperator",
+    "airflow.providers.amazon.aws.transfers.s3_to_dynamodb.S3ToDynamoDBOperator",
+    "airflow.providers.amazon.aws.operators.mwaa.MwaaTriggerDagRunOperator",
+    "airflow.providers.amazon.aws.transfers.s3_to_redshift.S3ToRedshiftOperator",
+    "airflow.providers.common.sql.operators.sql.SQLTableCheckOperator",
+    required=False)
+
+  dependencies: list(str(), required=False)
+
+  accept_type: any(required=False)
+  account_id: any(required=False)
+  acl_policy: any(required=False)
+  action_if_job_exists: any(required=False)
+  action_if_model_exists: any(required=False)
+  additional_config_kwargs: any(required=False)
+  additional_info: any(required=False)
+  allow_random_location_choice: any(required=False)
+  allow_random_task_choice: any(required=False)
+  allow_version_upgrade: any(required=False)
+  appflow_run_task_id: any(required=False)
+  application_description: any(required=False)
+  application_id: any(required=False)
+  application_name: any(required=False)
+  apply_wildcard: any(required=False)
+  aqua_configuration_status: any(required=False)
+  archive_description: any(required=False)
+  array_properties: any(required=False)
+  autodeploy_endpoint_name: any(required=False)
+  automated_snapshot_retention_period: any(required=False)
+  availability_zone: any(required=False)
+  availability_zone_relocation: any(required=False)
+  aws_conn_id: any(required=False)
+  awslogs_enabled: any(required=False)
+  awslogs_fetch_interval: any(required=False)
+  awslogs_group: any(required=False)
+  awslogs_region: any(required=False)
+  awslogs_stream_prefix: any(required=False)
+  base_model_id: any(required=False)
+  body: any(required=False)
+  botocore_config: any(required=False)
+  bucket: any(required=False)
+  bucket_name: any(required=False)
+  capacity_provider_strategy: any(required=False)
+  catalog: any(required=False)
+  cdc_start_pos: any(required=False)
+  cdc_start_time: any(required=False)
+  cdc_stop_pos: any(required=False)
+  check_if_job_exists: any(required=False)
+  check_if_model_exists: any(required=False)
+  check_interval: any(required=False)
+  checksum: any(required=False)
+  client_context: any(required=False)
+  client_request_token: any(required=False)
+  cloudformation_parameters: any(required=False)
+  cluster: any(required=False)
+  cluster_id: any(required=False)
+  cluster_identifier: any(required=False)
+  cluster_name: any(required=False)
+  cluster_parameter_group_name: any(required=False)
+  cluster_role_arn: any(required=False)
+  cluster_security_groups: any(required=False)
+  cluster_states: any(required=False)
+  cluster_subnet_group_name: any(required=False)
+  cluster_type: any(required=False)
+  cluster_version: any(required=False)
+  code: any(required=False)
+  compressed_input: any(required=False)
+  compression: any(required=False)
+  compute: any(required=False)
+  compute_config: any(required=False)
+  compute_environment_name: any(required=False)
+  compute_resources: any(required=False)
+  concurrent_run_limit: any(required=False)
+  conf: any(required=False)
+  config: any(required=False)
+  configuration_overrides: any(required=False)
+  container_definitions: any(required=False)
+  container_name: any(required=False)
+  container_overrides: any(required=False)
+  content_type: any(required=False)
+  copy_tags: any(required=False)
+  create_application_kwargs: any(required=False)
+  create_cluster_kwargs: any(required=False)
+  create_data_source_kwargs: any(required=False)
+  create_destination_location_kwargs: any(required=False)
+  create_fargate_profile_kwargs: any(required=False)
+  create_instance_kwargs: any(required=False)
+  create_job_kwargs: any(required=False)
+  create_knowledge_base_kwargs: any(required=False)
+  create_nodegroup_kwargs: any(required=False)
+  create_source_location_kwargs: any(required=False)
+  create_task_kwargs: any(required=False)
+  create_throughput_kwargs: any(required=False)
+  custom_model_name: any(required=False)
+  customization_job_kwargs: any(required=False)
+  data: any(required=False)
+  data_access_role_arn: any(required=False)
+  data_interval_end: any(required=False)
+  data_interval_start: any(required=False)
+  data_quality_ruleset_kwargs: any(required=False)
+  data_set_id: any(required=False)
+  data_source_id: any(required=False)
+  database: any(required=False)
+  datasource: any(required=False)
+  db_cluster_id: any(required=False)
+  db_identifier: any(required=False)
+  db_instance_class: any(required=False)
+  db_instance_identifier: any(required=False)
+  db_name: any(required=False)
+  db_snapshot_identifier: any(required=False)
+  db_type: any(required=False)
+  db_user: any(required=False)
+  default_iam_role_arn: any(required=False)
+  deferrable: any(required=False)
+  delay: any(required=False)
+  delay_seconds: any(required=False)
+  delete_task_after_execution: any(required=False)
+  delimiter: any(required=False)
+  describe_tasks_kwargs: any(required=False)
+  description: any(required=False)
+  dest_aws_conn_id: any(required=False)
+  dest_bucket_key: any(required=False)
+  dest_bucket_name: any(required=False)
+  dest_s3_key: any(required=False)
+  dest_verify: any(required=False)
+  destination_location_uri: any(required=False)
+  direct_internet_access: any(required=False)
+  display_name: any(required=False)
+  document_classifier_kwargs: any(required=False)
+  document_classifier_name: any(required=False)
+  document_name: any(required=False)
+  ecs_properties_override: any(required=False)
+  editor_id: any(required=False)
+  eks_cluster_name: any(required=False)
+  eks_namespace: any(required=False)
+  eks_properties_override: any(required=False)
+  elastic_ip: any(required=False)
+  embedding_model_arn: any(required=False)
+  emr_conn_id: any(required=False)
+  enable_application_ui_links: any(required=False)
+  enabled: any(required=False)
+  encoding: any(required=False)
+  encrypt: any(required=False)
+  encrypted: any(required=False)
+  endpoint_id: any(required=False)
+  engine: any(required=False)
+  enhanced_vpc_routing: any(required=False)
+  ensure_unique_job_name: any(required=False)
+  entries: any(required=False)
+  env_name: any(required=False)
+  environment_type: any(required=False)
+  event_bus_name: any(required=False)
+  event_categories: any(required=False)
+  event_pattern: any(required=False)
+  execution_arn: any(required=False)
+  execution_role_arn: any(required=False)
+  export_only: any(required=False)
+  export_task_identifier: any(required=False)
+  extras: any(required=False)
+  fail_if_not_running: any(required=False)
+  fail_on_warnings: any(required=False)
+  family: any(required=False)
+  fargate_pod_execution_role_arn: any(required=False)
+  fargate_profile_name: any(required=False)
+  fargate_selectors: any(required=False)
+  filter: any(required=False)
+  filter_date: any(required=False)
+  final_cluster_snapshot_identifier: any(required=False)
+  flow_name: any(required=False)
+  flow_update: any(required=False)
+  force: any(required=False)
+  force_delete: any(required=False)
+  force_delete_compute: any(required=False)
+  force_stop: any(required=False)
+  from_datetime: any(required=False)
+  function_name: any(required=False)
+  group: any(required=False)
+  handler: any(required=False)
+  hsm_client_certificate_identifier: any(required=False)
+  hsm_configuration_identifier: any(required=False)
+  hyperparameters: any(required=False)
+  iam_role_arn: any(required=False)
+  iam_role_name: any(required=False)
+  iam_roles: any(required=False)
+  ignore_downstream_trigger_rules: any(required=False)
+  image_id: any(required=False)
+  image_uri: any(required=False)
+  in_cluster: any(required=False)
+  indexing_error_max_attempts: any(required=False)
+  indexing_error_retry_delay: any(required=False)
+  ingest_data_kwargs: any(required=False)
+  ingestion_id: any(required=False)
+  ingestion_type: any(required=False)
+  input: any(required=False)
+  input_config: any(required=False)
+  input_data: any(required=False)
+  input_data_config: any(required=False)
+  input_uri: any(required=False)
+  instance_id: any(required=False)
+  instance_ids: any(required=False)
+  instance_name: any(required=False)
+  instance_type: any(required=False)
+  invocation_type: any(required=False)
+  invoke_kwargs: any(required=False)
+  is_redrive_execution: any(required=False)
+  job_definition: any(required=False)
+  job_desc: any(required=False)
+  job_driver: any(required=False)
+  job_flow_id: any(required=False)
+  job_flow_name: any(required=False)
+  job_flow_overrides: any(required=False)
+  job_id: any(required=False)
+  job_name: any(required=False)
+  job_poll_interval: any(required=False)
+  job_queue: any(required=False)
+  job_retry_max_attempts: any(required=False)
+  job_type: any(required=False)
+  keep_empty_log_lines: any(required=False)
+  key: any(required=False)
+  keys: any(required=False)
+  kms_key_id: any(required=False)
+  knowledge_base_id: any(required=False)
+  language_code: any(required=False)
+  launch_type: any(required=False)
+  lifecycle_config_name: any(required=False)
+  log_query: any(required=False)
+  log_type: any(required=False)
+  logical_date: any(required=False)
+  maintenance_track_name: any(required=False)
+  manual_snapshot_retention_period: any(required=False)
+  master_instance_security_group_id: any(required=False)
+  master_user_password: any(required=False)
+  master_username: any(required=False)
+  max_attempt: any(required=False)
+  max_attempts: any(required=False)
+  max_count: any(required=False)
+  max_ingestion_time: any(required=False)
+  max_iterations: any(required=False)
+  max_polling_attempts: any(required=False)
+  max_retries: any(required=False)
+  message: any(required=False)
+  message_attributes: any(required=False)
+  message_content: any(required=False)
+  message_deduplication_id: any(required=False)
+  message_group_id: any(required=False)
+  meta_data_directive: any(required=False)
+  migration_type: any(required=False)
+  min_count: any(required=False)
+  mode: any(required=False)
+  model_approval: any(required=False)
+  model_arn: any(required=False)
+  model_id: any(required=False)
+  model_units: any(required=False)
+  model_url: any(required=False)
+  name: any(required=False)
+  namespace: any(required=False)
+  network_configuration: any(required=False)
+  node_overrides: any(required=False)
+  node_type: any(required=False)
+  nodegroup_name: any(required=False)
+  nodegroup_role_arn: any(required=False)
+  nodegroup_subnets: any(required=False)
+  note: any(required=False)
+  notebook_execution_id: any(required=False)
+  notebook_execution_name: any(required=False)
+  notebook_instance_security_group_id: any(required=False)
+  notebook_params: any(required=False)
+  num_of_dpus: any(required=False)
+  number_logs_exception: any(required=False)
+  number_of_nodes: any(required=False)
+  number_of_workers: any(required=False)
+  on_finish_action: any(required=False)
+  operation: any(required=False)
+  option_group_name: any(required=False)
+  output_config: any(required=False)
+  output_data_config: any(required=False)
+  output_data_uri: any(required=False)
+  output_location: any(required=False)
+  output_uri: any(required=False)
+  overrides: any(required=False)
+  package_desc: any(required=False)
+  package_group_desc: any(required=False)
+  package_group_name: any(required=False)
+  parameters: any(required=False)
+  payload: any(required=False)
+  pipeline_exec_arn: any(required=False)
+  pipeline_name: any(required=False)
+  pipeline_params: any(required=False)
+  placement_constraints: any(required=False)
+  placement_strategy: any(required=False)
+  platform_version: any(required=False)
+  pod_execution_role_arn: any(required=False)
+  pod_name: any(required=False)
+  poll_interval: any(required=False)
+  port: any(required=False)
+  pre_signed_url: any(required=False)
+  preferred_maintenance_window: any(required=False)
+  prefix: any(required=False)
+  print_log: any(required=False)
+  prompt_template: any(required=False)
+  propagate_tags: any(required=False)
+  provisioned_model_name: any(required=False)
+  publicly_accessible: any(required=False)
+  qualifier: any(required=False)
+  query: any(required=False)
+  query_execution_context: any(required=False)
+  quota_retry: any(required=False)
+  rag_kwargs: any(required=False)
+  rds_kwargs: any(required=False)
+  reattach: any(required=False)
+  recommendation_run_kwargs: any(required=False)
+  region: any(required=False)
+  region_name: any(required=False)
+  register_task_kwargs: any(required=False)
+  relative_path: any(required=False)
+  release_label: any(required=False)
+  replace: any(required=False)
+  replace_script_file: any(required=False)
+  replication_config_arn: any(required=False)
+  replication_config_id: any(required=False)
+  replication_instance_arn: any(required=False)
+  replication_start_type: any(required=False)
+  replication_task_arn: any(required=False)
+  replication_task_id: any(required=False)
+  replication_type: any(required=False)
+  resources_vpc_config: any(required=False)
+  result_configuration: any(required=False)
+  retention_period: any(required=False)
+  retrieval_query: any(required=False)
+  retrieve_kwargs: any(required=False)
+  retry_limit: any(required=False)
+  retry_strategy: any(required=False)
+  return_sql_result: any(required=False)
+  role: any(required=False)
+  role_arn: any(required=False)
+  root_access: any(required=False)
+  rule_set_evaluation_run_kwargs: any(required=False)
+  rule_set_names: any(required=False)
+  ruleset: any(required=False)
+  run_command_kwargs: any(required=False)
+  run_configuration: any(required=False)
+  run_job_kwargs: any(required=False)
+  runtime: any(required=False)
+  runtime_environment: any(required=False)
+  s3_bucket: any(required=False)
+  s3_bucket_name: any(required=False)
+  s3_input: any(required=False)
+  s3_key: any(required=False)
+  s3_output: any(required=False)
+  s3_prefix: any(required=False)
+  schedule_expression: any(required=False)
+  scheduling_priority_override: any(required=False)
+  script_args: any(required=False)
+  script_location: any(required=False)
+  secret_arn: any(required=False)
+  select_expr_serialization_config: any(required=False)
+  select_expression: any(required=False)
+  selectors: any(required=False)
+  service_execution_role: any(required=False)
+  service_role: any(required=False)
+  session_id: any(required=False)
+  session_keep_alive_seconds: any(required=False)
+  share_identifier: any(required=False)
+  show_results: any(required=False)
+  skip_final_cluster_snapshot: any(required=False)
+  sleep_before_return: any(required=False)
+  sleep_time: any(required=False)
+  snapshot_identifier: any(required=False)
+  snapshot_schedule_identifier: any(required=False)
+  sns_topic_arn: any(required=False)
+  source: any(required=False)
+  source_arn: any(required=False)
+  source_aws_conn_id: any(required=False)
+  source_bucket_key: any(required=False)
+  source_bucket_name: any(required=False)
+  source_db_snapshot_identifier: any(required=False)
+  source_endpoint_arn: any(required=False)
+  source_field: any(required=False)
+  source_ids: any(required=False)
+  source_location_uri: any(required=False)
+  source_region: any(required=False)
+  source_s3_key: any(required=False)
+  source_type: any(required=False)
+  source_verify: any(required=False)
+  source_version_id: any(required=False)
+  sources: any(required=False)
+  sql: any(required=False)
+  sqs_queue: any(required=False)
+  stack_name: any(required=False)
+  start_pii_entities_kwargs: any(required=False)
+  start_replication_task_type: any(required=False)
+  start_task_kwargs: any(required=False)
+  state: any(required=False)
+  state_machine_arn: any(required=False)
+  state_machine_input: any(required=False)
+  statement_name: any(required=False)
+  status_retries: any(required=False)
+  step_concurrency_level: any(required=False)
+  steps: any(required=False)
+  stop_job_run_on_kill: any(required=False)
+  storage_config: any(required=False)
+  subject: any(required=False)
+  submit_job_timeout: any(required=False)
+  subscription_name: any(required=False)
+  table_mappings: any(required=False)
+  tag_set: any(required=False)
+  tags: any(required=False)
+  target_arn: any(required=False)
+  target_attribute: any(required=False)
+  target_custom_availability_zone: any(required=False)
+  target_db_snapshot_identifier: any(required=False)
+  target_endpoint_arn: any(required=False)
+  task_arn: any(required=False)
+  task_definition: any(required=False)
+  task_execution_kwargs: any(required=False)
+  task_id: any(required=False)
+  termination_condition: any(required=False)
+  time_limit: any(required=False)
+  timeout: any(required=False)
+  to_datetime: any(required=False)
+  training_data_uri: any(required=False)
+  transform_script: any(required=False)
+  trigger_dag_id: any(required=False)
+  trigger_run_id: any(required=False)
+  unmanaged_v_cpus: any(required=False)
+  update_config: any(required=False)
+  update_rule_set: any(required=False)
+  update_task_kwargs: any(required=False)
+  value: any(required=False)
+  vault_name: any(required=False)
+  vector_search_config: any(required=False)
+  verbose: any(required=False)
+  verify: any(required=False)
+  verify_result_status: any(required=False)
+  virtual_cluster_id: any(required=False)
+  virtual_cluster_name: any(required=False)
+  volume_configurations: any(required=False)
+  volume_kms_key_id: any(required=False)
+  volume_size_in_gb: any(required=False)
+  vpc_security_group_ids: any(required=False)
+  wait_for_completion: any(required=False)
+  wait_for_indexing: any(required=False)
+  wait_interval_seconds: any(required=False)
+  wait_policy: any(required=False)
+  waiter_delay: any(required=False)
+  waiter_interval: any(required=False)
+  waiter_max_attempts: any(required=False)
+  waiters: any(required=False)
+  with_event: any(required=False)
+  workgroup: any(required=False)
+  workgroup_name: any(required=False)
+
+  allow_delete: any(required=False)
+  application_id: any(required=False)
+  application_name: any(required=False)
+  attribute_name: any(required=False)
+  attribute_value: any(required=False)
+  aws_conn_id: any(required=False)
+  botocore_config: any(required=False)
+  bucket_key: any(required=False)
+  bucket_name: any(required=False)
+  check_fn: any(required=False)
+  cluster: any(required=False)
+  cluster_identifier: any(required=False)
+  cluster_name: any(required=False)
+  collection_id: any(required=False)
+  collection_name: any(required=False)
+  command_id: any(required=False)
+  compute_environment: any(required=False)
+  crawler_name: any(required=False)
+  data_set_id: any(required=False)
+  data_source_id: any(required=False)
+  database_name: any(required=False)
+  db_identifier: any(required=False)
+  db_snapshot_identifier: any(required=False)
+  db_type: any(required=False)
+  deferrable: any(required=False)
+  delete_message_on_reception: any(required=False)
+  document_classifier_arn: any(required=False)
+  endpoint_name: any(required=False)
+  error_statuses: any(required=False)
+  evaluation_run_id: any(required=False)
+  execution_arn: any(required=False)
+  execution_id: any(required=False)
+  execution_name: any(required=False)
+  export_task_identifier: any(required=False)
+  expression: any(required=False)
+  external_dag_id: any(required=False)
+  external_dag_run_id: any(required=False)
+  external_env_name: any(required=False)
+  fail_on_warnings: any(required=False)
+  failed_states: any(required=False)
+  failure_states: any(required=False)
+  fargate_profile_name: any(required=False)
+  function_name: any(required=False)
+  hook_params: any(required=False)
+  inactivity_period: any(required=False)
+  ingestion_id: any(required=False)
+  ingestion_job_id: any(required=False)
+  instance_id: any(required=False)
+  job_arn: any(required=False)
+  job_flow_id: any(required=False)
+  job_id: any(required=False)
+  job_name: any(required=False)
+  job_queue: any(required=False)
+  job_run_id: any(required=False)
+  knowledge_base_id: any(required=False)
+  max_attempts: any(required=False)
+  max_messages: any(required=False)
+  max_retries: any(required=False)
+  message_filtering: any(required=False)
+  message_filtering_config: any(required=False)
+  message_filtering_match_values: any(required=False)
+  metadata_keys: any(required=False)
+  min_objects: any(required=False)
+  mode: any(required=False)
+  model_id: any(required=False)
+  nodegroup_name: any(required=False)
+  notebook_execution_id: any(required=False)
+  num_batches: any(required=False)
+  partition_key_name: any(required=False)
+  partition_key_value: any(required=False)
+  pipeline_exec_arn: any(required=False)
+  poke_interval: any(required=False)
+  poll_interval: any(required=False)
+  prefix: any(required=False)
+  previous_objects: any(required=False)
+  print_log: any(required=False)
+  qualifier: any(required=False)
+  query_execution_id: any(required=False)
+  recommendation_run_id: any(required=False)
+  region: any(required=False)
+  region_name: any(required=False)
+  replication_task_arn: any(required=False)
+  resource_type: any(required=False)
+  run_id: any(required=False)
+  show_results: any(required=False)
+  sleep_time: any(required=False)
+  sort_key_name: any(required=False)
+  sort_key_value: any(required=False)
+  sqs_queue: any(required=False)
+  stack_name: any(required=False)
+  step_id: any(required=False)
+  success_state: any(required=False)
+  success_states: any(required=False)
+  table_name: any(required=False)
+  target_state: any(required=False)
+  target_state_type: any(required=False)
+  target_states: any(required=False)
+  target_status: any(required=False)
+  target_statuses: any(required=False)
+  task: any(required=False)
+  task_definition: any(required=False)
+  termination_statuses: any(required=False)
+  treat_non_existing_as_deleted: any(required=False)
+  use_regex: any(required=False)
+  vault_name: any(required=False)
+  verbose: any(required=False)
+  verify: any(required=False)
+  verify_result_status: any(required=False)
+  virtual_cluster_id: any(required=False)
+  visibility_timeout: any(required=False)
+  wait_time_seconds: any(required=False)
+  wildcard_match: any(required=False)
+
+  acl_policy: any(required=False)
+  allow_disk_use: any(required=False)
+  auth_type: any(required=False)
+  autocommit: any(required=False)
+  aws_conn_id: any(required=False)
+  billing_mode: any(required=False)
+  bucket_name: any(required=False)
+  check_interval: any(required=False)
+  chunk_size: any(required=False)
+  coerce_to_timestamp: any(required=False)
+  column_list: any(required=False)
+  commit_every: any(required=False)
+  compression: any(required=False)
+  container_name: any(required=False)
+  copy_options: any(required=False)
+  data: any(required=False)
+  delete_on_error: any(required=False)
+  delimiter: any(required=False)
+  dest_aws_conn_id: any(required=False)
+  dest_bucket: any(required=False)
+  dest_key: any(required=False)
+  dest_s3_extra_args: any(required=False)
+  dest_s3_key: any(required=False)
+  dest_verify: any(required=False)
+  dynamodb_attributes: any(required=False)
+  dynamodb_key_schema: any(required=False)
+  dynamodb_scan_kwargs: any(required=False)
+  dynamodb_table_name: any(required=False)
+  dynamodb_tmp_table_prefix: any(required=False)
+  encrypt: any(required=False)
+  endpoint: any(required=False)
+  exasol_conn_id: any(required=False)
+  export_format: any(required=False)
+  export_params: any(required=False)
+  export_table_to_point_in_time_kwargs: any(required=False)
+  export_time: any(required=False)
+  extra_options: any(required=False)
+  fail_on_file_not_exist: any(required=False)
+  file_format: any(required=False)
+  file_size: any(required=False)
+  filename: any(required=False)
+  ftp_conn_id: any(required=False)
+  ftp_filenames: any(required=False)
+  ftp_path: any(required=False)
+  gcp_conn_id: any(required=False)
+  gcp_user_project: any(required=False)
+  gcs_bucket: any(required=False)
+  google_api_endpoint_params: any(required=False)
+  google_api_endpoint_params_via_xcom: any(required=False)
+  google_api_endpoint_params_via_xcom_task_ids: any(required=False)
+  google_api_endpoint_path: any(required=False)
+  google_api_num_retries: any(required=False)
+  google_api_pagination: any(required=False)
+  google_api_response_via_xcom: any(required=False)
+  google_api_service_name: any(required=False)
+  google_api_service_version: any(required=False)
+  google_impersonation_chain: any(required=False)
+  groupby_kwargs: any(required=False)
+  gzip: any(required=False)
+  headers: any(required=False)
+  hiveserver2_conn_id: any(required=False)
+  http_conn_id: any(required=False)
+  imap_attachment_name: any(required=False)
+  imap_check_regex: any(required=False)
+  imap_conn_id: any(required=False)
+  imap_mail_filter: any(required=False)
+  imap_mail_folder: any(required=False)
+  import_table_creation_kwargs: any(required=False)
+  import_table_kwargs: any(required=False)
+  include_deleted: any(required=False)
+  include_header: any(required=False)
+  input_format: any(required=False)
+  keep_directory_structure: any(required=False)
+  key: any(required=False)
+  log_response: any(required=False)
+  match_glob: any(required=False)
+  max_attempts: any(required=False)
+  max_rows_per_file: any(required=False)
+  method: any(required=False)
+  mongo_collection: any(required=False)
+  mongo_conn_id: any(required=False)
+  mongo_db: any(required=False)
+  mongo_projection: any(required=False)
+  mongo_query: any(required=False)
+  object_name: any(required=False)
+  parameters: any(required=False)
+  parser: any(required=False)
+  pd_kwargs: any(required=False)
+  point_in_time_export: any(required=False)
+  pre_process: any(required=False)
+  pre_process_args: any(required=False)
+  pre_process_kwargs: any(required=False)
+  prefix: any(required=False)
+  process_func: any(required=False)
+  query: any(required=False)
+  query_or_table: any(required=False)
+  query_params: any(required=False)
+  read_pd_kwargs: any(required=False)
+  record_time_added: any(required=False)
+  redshift_conn_id: any(required=False)
+  redshift_data_api_kwargs: any(required=False)
+  region_name: any(required=False)
+  replace: any(required=False)
+  s3_acl_policy: any(required=False)
+  s3_bucket: any(required=False)
+  s3_bucket_name: any(required=False)
+  s3_conn_id: any(required=False)
+  s3_destination_key: any(required=False)
+  s3_extra_args: any(required=False)
+  s3_filenames: any(required=False)
+  s3_key: any(required=False)
+  s3_key_prefix: any(required=False)
+  s3_overwrite: any(required=False)
+  salesforce_conn_id: any(required=False)
+  salesforce_query: any(required=False)
+  schema: any(required=False)
+  select_query: any(required=False)
+  sftp_conn_id: any(required=False)
+  sftp_path: any(required=False)
+  source_aws_conn_id: any(required=False)
+  sql: any(required=False)
+  sql_conn_id: any(required=False)
+  sql_hook_params: any(required=False)
+  table: any(required=False)
+  table_as_file_name: any(required=False)
+  table_keys: any(required=False)
+  table_name: any(required=False)
+  tcp_keep_alive: any(required=False)
+  tcp_keep_alive_count: any(required=False)
+  tcp_keep_alive_idle: any(required=False)
+  tcp_keep_alive_interval: any(required=False)
+  unload_options: any(required=False)
+  upsert_keys: any(required=False)
+  use_existing_table: any(required=False)
+  use_temp_file: any(required=False)
+  vault_name: any(required=False)
+  verify: any(required=False)
+  wait_for_completion: any(required=False)
+  wasb_conn_id: any(required=False)
+  wasb_extra_args: any(required=False)
