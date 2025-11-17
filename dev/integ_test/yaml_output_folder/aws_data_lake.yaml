@@ -1,0 +1,243 @@
+aws_data_lake:
+  dag_id: aws_data_lake
+  params: {}
+  default_args:
+    owner: airflow
+    start_date:
+      __type__: datetime.datetime
+      year: 2026
+      month: 1
+      day: 1
+    retries: 1
+    retry_delay:
+      __type__: datetime.timedelta
+      seconds: 300.0
+  schedule: '@daily'
+  tasks:
+    create_bucket_data-lake-raw:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: data-lake-raw
+      outlets: []
+      params: {}
+      priority_weight: 1
+      region_name: us-east-1
+      retries: 1
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: create_bucket_data-lake-raw
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    create_bucket_data-lake-processed:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: data-lake-processed
+      outlets: []
+      params: {}
+      priority_weight: 1
+      region_name: us-east-1
+      retries: 1
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: create_bucket_data-lake-processed
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    create_file_data-lake-raw_sample_data1.csv:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
+      aws_conn_id: aws_default
+      data: sample,data,1
+      encrypt: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replace: true
+      retries: 1
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: data-lake-raw
+      s3_key: sample/data1.csv
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: create_file_data-lake-raw_sample_data1.csv
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - create_bucket_data-lake-raw
+    create_file_data-lake-raw_sample_data2.csv:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
+      aws_conn_id: aws_default
+      data: sample,data,2
+      encrypt: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replace: true
+      retries: 1
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: data-lake-raw
+      s3_key: sample/data2.csv
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: create_file_data-lake-raw_sample_data2.csv
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - create_bucket_data-lake-raw
+    list_data-lake-raw:
+      operator: airflow.providers.amazon.aws.operators.s3.S3ListOperator
+      apply_wildcard: false
+      aws_conn_id: aws_default
+      bucket: data-lake-raw
+      delimiter: ''
+      outlets: []
+      params: {}
+      prefix: ''
+      priority_weight: 1
+      retries: 1
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: list_data-lake-raw
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - create_file_data-lake-raw_sample_data2.csv
+      - create_file_data-lake-raw_sample_data1.csv
+    list_data-lake-processed:
+      operator: airflow.providers.amazon.aws.operators.s3.S3ListOperator
+      apply_wildcard: false
+      aws_conn_id: aws_default
+      bucket: data-lake-processed
+      delimiter: ''
+      outlets: []
+      params: {}
+      prefix: ''
+      priority_weight: 1
+      retries: 1
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: list_data-lake-processed
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    sense_data-lake-raw_sample_data1.csv:
+      operator: airflow.providers.amazon.aws.sensors.s3.S3KeySensor
+      aws_conn_id: aws_default
+      bucket_key: sample/data1.csv
+      bucket_name: data-lake-raw
+      deferrable: false
+      metadata_keys:
+      - Size
+      - Key
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 30
+      priority_weight: 1
+      retries: 1
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: sense_data-lake-raw_sample_data1.csv
+      timeout: 300
+      trigger_rule: all_success
+      use_regex: false
+      wait_for_downstream: false
+      wildcard_match: false
+      dependencies:
+      - list_data-lake-raw
+    sense_data-lake-raw_sample_data2.csv:
+      operator: airflow.providers.amazon.aws.sensors.s3.S3KeySensor
+      aws_conn_id: aws_default
+      bucket_key: sample/data2.csv
+      bucket_name: data-lake-raw
+      deferrable: false
+      metadata_keys:
+      - Size
+      - Key
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 30
+      priority_weight: 1
+      retries: 1
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: sense_data-lake-raw_sample_data2.csv
+      timeout: 300
+      trigger_rule: all_success
+      use_regex: false
+      wait_for_downstream: false
+      wildcard_match: false
+      dependencies:
+      - list_data-lake-raw
+  auto_register: true
+  catchup: true
+  dag_display_name: aws_data_lake
+  description: Dynamically generated AWS DAG for data_lake
+  fail_fast: false
+  max_active_runs: 16
+  max_active_tasks: 16
+  max_consecutive_failed_dag_runs: 0
+  owner_links: {}
+  render_template_as_native_obj: false
+  start_date:
+    __type__: datetime.datetime
+    year: 2026
+    month: 1
+    day: 1
+  tags: []
+  template_undefined: jinja2.runtime.StrictUndefined

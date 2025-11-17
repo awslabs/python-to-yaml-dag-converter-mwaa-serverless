@@ -1,0 +1,208 @@
+example_emr_notebook:
+  dag_id: example_emr_notebook
+  params: {}
+  default_args:
+    start_date:
+      __type__: datetime.datetime
+      year: 2026
+      month: 1
+      day: 1
+  schedule: '@once'
+  tasks:
+    start_execution:
+      operator: airflow.providers.amazon.aws.operators.emr.EmrStartNotebookExecutionOperator
+      aws_conn_id: aws_default
+      cluster_id: test-cluster-id
+      editor_id: test-editor-id
+      notebook_execution_name: emr_notebook_a2e5b8d1-cc42-464b-b12b-e369254671c1
+      notebook_instance_security_group_id: ''
+      notebook_params: ''
+      outlets: []
+      params: {}
+      priority_weight: 1
+      relative_path: EMR-System-Test.ipynb
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      service_role: EMR_Notebooks_DefaultRole
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      tags: []
+      task_id: start_execution
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 25
+      dependencies: []
+    wait_for_execution_start:
+      operator: airflow.providers.amazon.aws.sensors.emr.EmrNotebookExecutionSensor
+      aws_conn_id: aws_default
+      failed_states:
+      - FAILED
+      mode: poke
+      notebook_execution_id: "{{ task_instance.xcom_pull(task_ids='start_execution',\
+        \ key='return_value') }}"
+      outlets: []
+      params: {}
+      poke_interval: 5
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      target_states:
+      - RUNNING
+      task_id: wait_for_execution_start
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - start_execution
+    stop_execution:
+      operator: airflow.providers.amazon.aws.operators.emr.EmrStopNotebookExecutionOperator
+      aws_conn_id: aws_default
+      notebook_execution_id: "{{ task_instance.xcom_pull(task_ids='start_execution',\
+        \ key='return_value') }}"
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: stop_execution
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 25
+      dependencies:
+      - start_execution
+      - wait_for_execution_start
+    wait_for_execution_stop:
+      operator: airflow.providers.amazon.aws.sensors.emr.EmrNotebookExecutionSensor
+      aws_conn_id: aws_default
+      failed_states:
+      - FAILED
+      mode: poke
+      notebook_execution_id: "{{ task_instance.xcom_pull(task_ids='start_execution',\
+        \ key='return_value') }}"
+      outlets: []
+      params: {}
+      poke_interval: 5
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      target_states:
+      - STOPPED
+      task_id: wait_for_execution_stop
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - start_execution
+      - stop_execution
+    finish_execution:
+      operator: airflow.providers.amazon.aws.operators.emr.EmrStartNotebookExecutionOperator
+      aws_conn_id: aws_default
+      cluster_id: test-cluster-id
+      editor_id: test-editor-id
+      notebook_execution_name: emr_notebook_6a33f7fe-1164-41d8-918f-9d03b1b39430
+      notebook_instance_security_group_id: ''
+      notebook_params: ''
+      outlets: []
+      params: {}
+      priority_weight: 1
+      relative_path: EMR-System-Test.ipynb
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      service_role: EMR_Notebooks_DefaultRole
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      tags: []
+      task_id: finish_execution
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 25
+      dependencies:
+      - wait_for_execution_stop
+    wait_for_execution_finish:
+      operator: airflow.providers.amazon.aws.sensors.emr.EmrNotebookExecutionSensor
+      aws_conn_id: aws_default
+      failed_states:
+      - FAILED
+      mode: poke
+      notebook_execution_id: "{{ task_instance.xcom_pull(task_ids='finish_execution',\
+        \ key='return_value') }}"
+      outlets: []
+      params: {}
+      poke_interval: 5
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      target_states:
+      - FINISHED
+      task_id: wait_for_execution_finish
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - finish_execution
+  auto_register: true
+  catchup: true
+  dag_display_name: example_emr_notebook
+  fail_fast: false
+  max_active_runs: 16
+  max_active_tasks: 16
+  max_consecutive_failed_dag_runs: 0
+  owner_links: {}
+  render_template_as_native_obj: false
+  start_date:
+    __type__: datetime.datetime
+    year: 2026
+    month: 1
+    day: 1
+  tags: []
+  template_undefined: jinja2.runtime.StrictUndefined

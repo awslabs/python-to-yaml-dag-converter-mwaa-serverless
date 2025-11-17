@@ -1,0 +1,79 @@
+example_mwaa:
+  dag_id: example_mwaa
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    trigger_dag_run:
+      operator: airflow.providers.amazon.aws.operators.mwaa.MwaaTriggerDagRunOperator
+      aws_conn_id: aws_default
+      conf: {}
+      deferrable: false
+      env_name: test-environment-name
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: trigger_dag_run
+      trigger_dag_id: test-dag-id
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 20
+      dependencies: [unpause_dag]
+    wait_for_dag_run:
+      operator: airflow.providers.amazon.aws.sensors.mwaa.MwaaDagRunSensor
+      aws_conn_id: aws_default
+      deferrable: false
+      external_dag_id: test-dag-id
+      external_dag_run_id: '{{ task_instance.xcom_pull(task_ids=''trigger_dag_run'')[''RestApiResponse''][''dag_run_id'']
+        }}'
+      external_env_name: test-environment-name
+      max_retries: 720
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 5
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: wait_for_dag_run
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [trigger_dag_run]
+    unpause_dag:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_mwaa.unpause_dag
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: unpause_dag
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      decorator: airflow.decorators.task
+      env_name: test-environment-name
+      dag_id: test-dag-id
+    test_iam_fallback:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_mwaa.test_iam_fallback
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: test_iam_fallback
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [wait_for_dag_run]
+      decorator: airflow.decorators.task
+      role_to_assume_arn: test-restricted-role-arn
+      mwaa_env_name: test-environment-name

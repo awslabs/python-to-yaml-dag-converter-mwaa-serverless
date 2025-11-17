@@ -1,0 +1,51 @@
+example_sns:
+  dag_id: example_sns
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    create_topic:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_sns.create_topic
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_topic
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      decorator: airflow.decorators.task
+      topic_name: test-test-topic
+    publish_message:
+      operator: airflow.providers.amazon.aws.operators.sns.SnsPublishOperator
+      aws_conn_id: aws_default
+      message: This is a sample message sent to SNS via an Apache Airflow DAG task.
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      target_arn: '{{ task_instance.xcom_pull(task_ids=''create_topic'', key=''return_value'')
+        }}'
+      task_id: publish_message
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_topic]
+    delete_topic:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_sns.delete_topic
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_topic
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [create_topic, publish_message]
+      decorator: airflow.decorators.task
+      topic_arn: +create_topic

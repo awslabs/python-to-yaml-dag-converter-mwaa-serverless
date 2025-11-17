@@ -1,0 +1,174 @@
+example_comprehend_document_classifier:
+  dag_id: example_comprehend_document_classifier
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    create_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-comprehend-document-classifier
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_bucket
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    s3_copy_discharge_task:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CopyObjectOperator
+      aws_conn_id: aws_default
+      dest_bucket_key: training-docs/discharge-summary-0.pdf
+      dest_bucket_name: test-comprehend-document-classifier
+      meta_data_directive: REPLACE
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      source_bucket_key: test-discharge-key
+      source_bucket_name: test-bucket
+      task_id: s3_copy_discharge_task
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_bucket]
+    s3_copy_doctors_notes_task:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CopyObjectOperator
+      aws_conn_id: aws_default
+      dest_bucket_key: training-docs/doctors-notes-0.pdf
+      dest_bucket_name: test-comprehend-document-classifier
+      meta_data_directive: REPLACE
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      source_bucket_key: test-doctors-notes-key
+      source_bucket_name: test-bucket
+      task_id: s3_copy_doctors_notes_task
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [s3_copy_discharge_task]
+    upload_annotation_file:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
+      aws_conn_id: aws_default
+      data: !!binary |
+        RElTQ0hBUkdFX1NVTU1BUlksZGlzY2hhcmdlLXN1bW1hcnktMC5wZGYsMQpESVNDSEFSR0VfU1VN
+        TUFSWSxkaXNjaGFyZ2Utc3VtbWFyeS0xLnBkZiwxCkRJU0NIQVJHRV9TVU1NQVJZLGRpc2NoYXJn
+        ZS1zdW1tYXJ5LTIucGRmLDEKRElTQ0hBUkdFX1NVTU1BUlksZGlzY2hhcmdlLXN1bW1hcnktMy5w
+        ZGYsMQpESVNDSEFSR0VfU1VNTUFSWSxkaXNjaGFyZ2Utc3VtbWFyeS00LnBkZiwxCkRJU0NIQVJH
+        RV9TVU1NQVJZLGRpc2NoYXJnZS1zdW1tYXJ5LTUucGRmLDEKRElTQ0hBUkdFX1NVTU1BUlksZGlz
+        Y2hhcmdlLXN1bW1hcnktNi5wZGYsMQpESVNDSEFSR0VfU1VNTUFSWSxkaXNjaGFyZ2Utc3VtbWFy
+        eS03LnBkZiwxCkRJU0NIQVJHRV9TVU1NQVJZLGRpc2NoYXJnZS1zdW1tYXJ5LTgucGRmLDEKRElT
+        Q0hBUkdFX1NVTU1BUlksZGlzY2hhcmdlLXN1bW1hcnktOS5wZGYsMQpET0NUT1JfTk9URVMsZG9j
+        dG9ycy1ub3Rlcy0wLnBkZiwxCkRPQ1RPUl9OT1RFUyxkb2N0b3JzLW5vdGVzLTEucGRmLDEKRE9D
+        VE9SX05PVEVTLGRvY3RvcnMtbm90ZXMtMi5wZGYsMQpET0NUT1JfTk9URVMsZG9jdG9ycy1ub3Rl
+        cy0zLnBkZiwxCkRPQ1RPUl9OT1RFUyxkb2N0b3JzLW5vdGVzLTQucGRmLDEKRE9DVE9SX05PVEVT
+        LGRvY3RvcnMtbm90ZXMtNS5wZGYsMQpET0NUT1JfTk9URVMsZG9jdG9ycy1ub3Rlcy02LnBkZiwx
+        CkRPQ1RPUl9OT1RFUyxkb2N0b3JzLW5vdGVzLTcucGRmLDEKRE9DVE9SX05PVEVTLGRvY3RvcnMt
+        bm90ZXMtOC5wZGYsMQpET0NUT1JfTk9URVMsZG9jdG9ycy1ub3Rlcy05LnBkZiwx
+      encrypt: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replace: false
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: test-comprehend-document-classifier
+      s3_key: training-labels/label.csv
+      task_id: upload_annotation_file
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [s3_copy_doctors_notes_task]
+    delete_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-comprehend-document-classifier
+      force_delete: true
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_bucket
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_classifier]
+    create_document_classifier:
+      operator: airflow.providers.amazon.aws.operators.comprehend.ComprehendCreateDocumentClassifierOperator
+      aws_conn_id: aws_default
+      data_access_role_arn: test
+      deferrable: false
+      document_classifier_kwargs:
+        VersionName: v1
+      document_classifier_name: test-custom-document-classifier
+      fail_on_warnings: false
+      input_data_config:
+        S3Uri: s3://test-comprehend-document-classifier/training-labels/label.csv
+        DataFormat: COMPREHEND_CSV
+        DocumentType: SEMI_STRUCTURED_DOCUMENT
+        Documents:
+          S3Uri: s3://test-comprehend-document-classifier/training-docs/
+        DocumentReaderConfig:
+          DocumentReadAction: TEXTRACT_DETECT_DOCUMENT_TEXT
+          DocumentReadMode: SERVICE_DEFAULT
+      language_code: en
+      mode: MULTI_CLASS
+      outlets: []
+      output_data_config:
+        S3Uri: s3://test-comprehend-document-classifier/output/
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_document_classifier
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 20
+      dependencies: [upload_annotation_file]
+    await_create_document_classifier:
+      operator: airflow.providers.amazon.aws.sensors.comprehend.ComprehendCreateDocumentClassifierCompletedSensor
+      aws_conn_id: aws_default
+      deferrable: false
+      document_classifier_arn: '{{ task_instance.xcom_pull(task_ids=''create_document_classifier'',
+        key=''return_value'') }}'
+      fail_on_warnings: false
+      max_retries: 75
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 120
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: await_create_document_classifier
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_document_classifier]
+    delete_classifier:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_comprehend_document_classifier.delete_classifier
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_classifier
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [create_document_classifier, await_create_document_classifier]
+      decorator: airflow.decorators.task
+      document_classifier_arn: +create_document_classifier

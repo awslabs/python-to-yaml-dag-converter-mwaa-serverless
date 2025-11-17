@@ -1,0 +1,594 @@
+example_redshift_s3_transfers:
+  dag_id: example_redshift_s3_transfers
+  params: {}
+  default_args:
+    start_date:
+      __type__: datetime.datetime
+      year: 2026
+      month: 1
+      day: 1
+  schedule: '@once'
+  tasks:
+    s3_create_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-bucket
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: s3_create_bucket
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    create_cluster:
+      operator: airflow.providers.amazon.aws.operators.redshift_cluster.RedshiftCreateClusterOperator
+      allow_version_upgrade: true
+      automated_snapshot_retention_period: 1
+      aws_conn_id: aws_default
+      cluster_identifier: test-redshift-cluster
+      cluster_subnet_group_name: test-cluster-subnet-group-name
+      cluster_type: single-node
+      cluster_version: '1.0'
+      db_name: dev
+      deferrable: false
+      encrypted: false
+      enhanced_vpc_routing: false
+      master_user_password: MyAmazonPassword1
+      master_username: adminuser
+      max_attempt: 5
+      node_type: dc2.large
+      number_of_nodes: 1
+      outlets: []
+      params: {}
+      poll_interval: 60
+      port: 5439
+      priority_weight: 1
+      publicly_accessible: false
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: create_cluster
+      trigger_rule: all_success
+      vpc_security_group_ids:
+      - test-security-group-id
+      wait_for_completion: false
+      wait_for_downstream: false
+      dependencies:
+      - s3_create_bucket
+    wait_cluster_available:
+      operator: airflow.providers.amazon.aws.sensors.redshift_cluster.RedshiftClusterSensor
+      aws_conn_id: aws_default
+      cluster_identifier: test-redshift-cluster
+      deferrable: false
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 5
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      target_status: available
+      task_id: wait_cluster_available
+      timeout: 1800
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - create_cluster
+    create_object:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
+      aws_conn_id: aws_default
+      data: "0, 'Airflow', 'testing'"
+      encrypt: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replace: true
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: test-bucket
+      s3_key: s3_key_2
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: create_object
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - wait_cluster_available
+    create_table_redshift_data:
+      operator: airflow.providers.amazon.aws.operators.redshift_data.RedshiftDataOperator
+      aws_conn_id: aws_default
+      cluster_identifier: test-redshift-cluster
+      database: dev
+      db_user: adminuser
+      deferrable: false
+      outlets: []
+      params: {}
+      poll_interval: 10
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      return_sql_result: false
+      sql: "DROP TABLE IF EXISTS test_table;\n        CREATE  TABLE test_table (\n\
+        \            fruit_id INTEGER,\n            name VARCHAR NOT NULL,\n     \
+        \       color VARCHAR NOT NULL\n        );\n    "
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: create_table_redshift_data
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      with_event: false
+      dependencies:
+      - create_object
+    insert_data:
+      operator: airflow.providers.amazon.aws.operators.redshift_data.RedshiftDataOperator
+      aws_conn_id: aws_default
+      cluster_identifier: test-redshift-cluster
+      database: dev
+      db_user: adminuser
+      deferrable: false
+      outlets: []
+      params: {}
+      poll_interval: 10
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      return_sql_result: false
+      sql: "INSERT INTO test_table VALUES ( 1, 'Banana', 'Yellow');"
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: insert_data
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      with_event: false
+      dependencies:
+      - create_table_redshift_data
+    transfer_redshift_to_s3:
+      operator: airflow.providers.amazon.aws.transfers.redshift_to_s3.RedshiftToS3Operator
+      autocommit: false
+      include_header: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      redshift_conn_id: redshift_default
+      redshift_data_api_kwargs:
+        database: dev
+        cluster_identifier: test-redshift-cluster
+        db_user: adminuser
+        wait_for_completion: true
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: test-bucket
+      s3_key: s3_output_
+      schema: PUBLIC
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      table: test_table
+      table_as_file_name: true
+      task_id: transfer_redshift_to_s3
+      trigger_rule: all_success
+      unload_options: []
+      wait_for_downstream: false
+      dependencies:
+      - insert_data
+    check_if_key_exists:
+      operator: airflow.providers.amazon.aws.sensors.s3.S3KeySensor
+      aws_conn_id: aws_default
+      bucket_key: s3_output_/test_table_0000_part_00
+      bucket_name: test-bucket
+      deferrable: false
+      metadata_keys:
+      - Size
+      - Key
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: check_if_key_exists
+      timeout: 604800.0
+      trigger_rule: all_success
+      use_regex: false
+      wait_for_downstream: false
+      wildcard_match: false
+      dependencies:
+      - transfer_redshift_to_s3
+    create_tmp_table:
+      operator: airflow.providers.amazon.aws.operators.redshift_data.RedshiftDataOperator
+      aws_conn_id: aws_default
+      cluster_identifier: test-redshift-cluster
+      database: dev
+      db_user: adminuser
+      deferrable: false
+      outlets: []
+      params: {}
+      poll_interval: 10
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      return_sql_result: false
+      session_keep_alive_seconds: 600
+      sql: |-
+        DROP TABLE IF EXISTS tmp_table;
+                CREATE TEMPORARY TABLE tmp_table (
+                    fruit_id INTEGER,
+                    name VARCHAR NOT NULL,
+                    color VARCHAR NOT NULL
+                );
+            INSERT INTO tmp_table VALUES ( 1, 'Banana', 'Yellow');
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: create_tmp_table
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      with_event: false
+      dependencies:
+      - wait_cluster_available
+    transfer_redshift_to_s3_reuse_session:
+      operator: airflow.providers.amazon.aws.transfers.redshift_to_s3.RedshiftToS3Operator
+      autocommit: false
+      include_header: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      redshift_conn_id: redshift_default
+      redshift_data_api_kwargs:
+        wait_for_completion: true
+        session_id: "{{ task_instance.xcom_pull(task_ids='create_tmp_table', key='session_id')\
+          \ }}"
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: test-bucket
+      s3_key: s3_output_tmp_table_
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      table: tmp_table
+      table_as_file_name: true
+      task_id: transfer_redshift_to_s3_reuse_session
+      trigger_rule: all_success
+      unload_options: []
+      wait_for_downstream: false
+      dependencies:
+      - create_tmp_table
+    check_if_tmp_table_key_exists:
+      operator: airflow.providers.amazon.aws.sensors.s3.S3KeySensor
+      aws_conn_id: aws_default
+      bucket_key: s3_output_tmp_table_/tmp_table_0000_part_00
+      bucket_name: test-bucket
+      deferrable: false
+      metadata_keys:
+      - Size
+      - Key
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: check_if_tmp_table_key_exists
+      timeout: 604800.0
+      trigger_rule: all_success
+      use_regex: false
+      wait_for_downstream: false
+      wildcard_match: false
+      dependencies:
+      - transfer_redshift_to_s3_reuse_session
+    transfer_s3_to_redshift:
+      operator: airflow.providers.amazon.aws.transfers.s3_to_redshift.S3ToRedshiftOperator
+      autocommit: false
+      aws_conn_id:
+        __type__: airflow.sdk.definitions._internal.types.ArgNotSet
+      copy_options:
+      - csv
+      method: APPEND
+      outlets: []
+      params: {}
+      priority_weight: 1
+      redshift_conn_id: redshift_default
+      redshift_data_api_kwargs:
+        database: dev
+        cluster_identifier: test-redshift-cluster
+        db_user: adminuser
+        wait_for_completion: true
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: test-bucket
+      s3_key: s3_key_2
+      schema: PUBLIC
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      table: test_table
+      task_id: transfer_s3_to_redshift
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - check_if_key_exists
+    create_dest_tmp_table:
+      operator: airflow.providers.amazon.aws.operators.redshift_data.RedshiftDataOperator
+      aws_conn_id: aws_default
+      cluster_identifier: test-redshift-cluster
+      database: dev
+      db_user: adminuser
+      deferrable: false
+      outlets: []
+      params: {}
+      poll_interval: 10
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      return_sql_result: false
+      session_keep_alive_seconds: 600
+      sql: "DROP TABLE IF EXISTS tmp_table;\n        CREATE TEMPORARY TABLE tmp_table\
+        \ (\n            fruit_id INTEGER,\n            name VARCHAR NOT NULL,\n \
+        \           color VARCHAR NOT NULL\n        );\n    "
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: create_dest_tmp_table
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      with_event: false
+      dependencies:
+      - wait_cluster_available
+    transfer_s3_to_redshift_tmp_table:
+      operator: airflow.providers.amazon.aws.transfers.s3_to_redshift.S3ToRedshiftOperator
+      autocommit: false
+      aws_conn_id:
+        __type__: airflow.sdk.definitions._internal.types.ArgNotSet
+      copy_options:
+      - csv
+      method: APPEND
+      outlets: []
+      params: {}
+      priority_weight: 1
+      redshift_conn_id: redshift_default
+      redshift_data_api_kwargs:
+        session_id: "{{ task_instance.xcom_pull(task_ids='create_dest_tmp_table',\
+          \ key='session_id') }}"
+        wait_for_completion: true
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: test-bucket
+      s3_key: s3_key_2
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      table: tmp_table
+      task_id: transfer_s3_to_redshift_tmp_table
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - create_dest_tmp_table
+    transfer_s3_to_redshift_multiple:
+      operator: airflow.providers.amazon.aws.transfers.s3_to_redshift.S3ToRedshiftOperator
+      autocommit: false
+      aws_conn_id:
+        __type__: airflow.sdk.definitions._internal.types.ArgNotSet
+      copy_options:
+      - csv
+      method: APPEND
+      outlets: []
+      params: {}
+      priority_weight: 1
+      redshift_conn_id: redshift_default
+      redshift_data_api_kwargs:
+        database: dev
+        cluster_identifier: test-redshift-cluster
+        db_user: adminuser
+        wait_for_completion: true
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: test-bucket
+      s3_key: s3_k
+      schema: PUBLIC
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      table: test_table
+      task_id: transfer_s3_to_redshift_multiple
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - transfer_s3_to_redshift
+    drop_table:
+      operator: airflow.providers.amazon.aws.operators.redshift_data.RedshiftDataOperator
+      aws_conn_id: aws_default
+      cluster_identifier: test-redshift-cluster
+      database: dev
+      db_user: adminuser
+      deferrable: false
+      outlets: []
+      params: {}
+      poll_interval: 10
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      return_sql_result: false
+      sql: DROP TABLE IF EXISTS test_table;
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: drop_table
+      trigger_rule: all_done
+      wait_for_completion: true
+      wait_for_downstream: false
+      with_event: false
+      dependencies:
+      - transfer_s3_to_redshift_multiple
+    delete_cluster:
+      operator: airflow.providers.amazon.aws.operators.redshift_cluster.RedshiftDeleteClusterOperator
+      aws_conn_id: aws_default
+      cluster_identifier: test-redshift-cluster
+      deferrable: false
+      max_attempts: 30
+      outlets: []
+      params: {}
+      poll_interval: 30
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      skip_final_cluster_snapshot: true
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: delete_cluster
+      trigger_rule: all_done
+      wait_for_completion: true
+      wait_for_downstream: false
+      dependencies:
+      - drop_table
+      - check_if_tmp_table_key_exists
+      - transfer_s3_to_redshift_tmp_table
+    delete_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-bucket
+      force_delete: true
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: delete_bucket
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies:
+      - delete_cluster
+  auto_register: true
+  catchup: true
+  dag_display_name: example_redshift_s3_transfers
+  fail_fast: false
+  max_active_runs: 16
+  max_active_tasks: 16
+  max_consecutive_failed_dag_runs: 0
+  owner_links: {}
+  render_template_as_native_obj: false
+  start_date:
+    __type__: datetime.datetime
+    year: 2026
+    month: 1
+    day: 1
+  tags: []
+  template_undefined: jinja2.runtime.StrictUndefined

@@ -1,0 +1,269 @@
+example_eks_with_fargate_profile:
+  dag_id: example_eks_with_fargate_profile
+  params: {}
+  default_args:
+    start_date:
+      __type__: datetime.datetime
+      year: 2026
+      month: 1
+      day: 1
+  schedule: '@once'
+  tasks:
+    create_eks_cluster:
+      operator: airflow.providers.amazon.aws.operators.eks.EksCreateClusterOperator
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      cluster_role_arn: test-cluster-role-arn
+      create_cluster_kwargs: {}
+      create_fargate_profile_kwargs: {}
+      create_nodegroup_kwargs: {}
+      deferrable: false
+      fargate_profile_name: profile
+      fargate_selectors:
+      - namespace: default
+      nodegroup_name: nodegroup
+      outlets: []
+      params: {}
+      priority_weight: 1
+      resources_vpc_config:
+        subnetIds:
+        - subnet-12345ab
+        - subnet-67890cd
+        endpointPublicAccess: true
+        endpointPrivateAccess: false
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: create_eks_cluster
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 30
+      waiter_max_attempts: 40
+      dependencies: []
+    wait_for_create_cluster:
+      operator: airflow.providers.amazon.aws.sensors.eks.EksClusterStateSensor
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      target_state:
+        __type__: airflow.providers.amazon.aws.hooks.eks.ClusterStates
+        __args__:
+        - ACTIVE
+      task_id: wait_for_create_cluster
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - create_eks_cluster
+    create_eks_fargate_profile:
+      operator: airflow.providers.amazon.aws.operators.eks.EksCreateFargateProfileOperator
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      create_fargate_profile_kwargs: {}
+      deferrable: false
+      fargate_profile_name: test-profile
+      outlets: []
+      params: {}
+      pod_execution_role_arn: test-fargate-pod-role-arn
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      selectors:
+      - namespace: default
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: create_eks_fargate_profile
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 10
+      waiter_max_attempts: 60
+      dependencies:
+      - wait_for_create_cluster
+    wait_for_create_fargate_profile:
+      operator: airflow.providers.amazon.aws.sensors.eks.EksFargateProfileStateSensor
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      fargate_profile_name: test-profile
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      target_state:
+        __type__: airflow.providers.amazon.aws.hooks.eks.FargateProfileStates
+        __args__:
+        - ACTIVE
+      task_id: wait_for_create_fargate_profile
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - create_eks_fargate_profile
+    delete_eks_fargate_profile:
+      operator: airflow.providers.amazon.aws.operators.eks.EksDeleteFargateProfileOperator
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      deferrable: false
+      fargate_profile_name: test-profile
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: delete_eks_fargate_profile
+      trigger_rule: all_done
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 30
+      waiter_max_attempts: 60
+      dependencies:
+      - wait_for_create_fargate_profile
+    wait_for_delete_fargate_profile:
+      operator: airflow.providers.amazon.aws.sensors.eks.EksFargateProfileStateSensor
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      fargate_profile_name: test-profile
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 10
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      target_state:
+        __type__: airflow.providers.amazon.aws.hooks.eks.FargateProfileStates
+        __args__:
+        - NONEXISTENT
+      task_id: wait_for_delete_fargate_profile
+      timeout: 604800.0
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies:
+      - delete_eks_fargate_profile
+    delete_eks_cluster:
+      operator: airflow.providers.amazon.aws.operators.eks.EksDeleteClusterOperator
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      deferrable: false
+      force_delete_compute: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: delete_eks_cluster
+      trigger_rule: all_done
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 30
+      waiter_max_attempts: 40
+      dependencies:
+      - wait_for_delete_fargate_profile
+    wait_for_delete_cluster:
+      operator: airflow.providers.amazon.aws.sensors.eks.EksClusterStateSensor
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 10
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      target_state:
+        __type__: airflow.providers.amazon.aws.hooks.eks.ClusterStates
+        __args__:
+        - NONEXISTENT
+      task_id: wait_for_delete_cluster
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - delete_eks_cluster
+  auto_register: true
+  catchup: true
+  dag_display_name: example_eks_with_fargate_profile
+  fail_fast: false
+  max_active_runs: 16
+  max_active_tasks: 16
+  max_consecutive_failed_dag_runs: 0
+  owner_links: {}
+  render_template_as_native_obj: false
+  start_date:
+    __type__: datetime.datetime
+    year: 2026
+    month: 1
+    day: 1
+  tags: []
+  template_undefined: jinja2.runtime.StrictUndefined

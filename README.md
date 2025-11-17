@@ -25,7 +25,7 @@ pip install python-to-yaml-dag-converter-mwaa-serverless
 ```
 dag-converter convert <python-dag-file>
 ```
-Call with the `--help` for more options
+Call with the `--help` flag for more options
 
 ### **Step 3**: Review
 Review the converted Dags in the `output_yaml` folder in the current directory
@@ -43,7 +43,7 @@ Review the converted Dags in the `output_yaml` folder in the current directory
 * Dynamic task mapping conversion is not supported
 
 ## Examples
-* See supported [examples](dev/integ_test/supported_python_test_folder/)
+* See supported [examples](https://github.com/awslabs/python-to-yaml-dag-converter-mwaa-serverless/blob/main/dev/integ_test/python_test_folder/supported)
 * Try one out
 ```
 dag-converter convert airflow_s3.py

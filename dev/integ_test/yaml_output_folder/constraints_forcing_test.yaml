@@ -1,0 +1,30 @@
+constraints_forcing_test:
+  dag_id: constraints_forcing_test
+  params: {}
+  default_args:
+    owner: airflow
+    depends_on_past: false
+    email: [airflow@example.com]
+    email_on_failure: false
+    email_on_retry: false
+    retries: 0
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    check_imports:
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      op_args: []
+      op_kwargs: {}
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: python_mwaa_1.check_imports
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: check_imports
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+  description: A test dag for checking constraints forcing
+  is_paused_upon_creation: false

@@ -1,0 +1,213 @@
+example_emr:
+  dag_id: example_emr
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    configure_security_config:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_emr.configure_security_config
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: configure_security_config
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_s3_bucket]
+      decorator: airflow.decorators.task
+      config_name: EMR Runtime Role Security Configuration-test
+    create_job_flow:
+      operator: airflow.providers.amazon.aws.operators.emr.EmrCreateJobFlowOperator
+      aws_conn_id: aws_default
+      deferrable: false
+      emr_conn_id: emr_default
+      job_flow_overrides:
+        Name: PiCalc
+        ReleaseLabel: emr-7.1.0
+        Applications: [{Name: Spark}]
+        Instances:
+          InstanceGroups: [{Name: Primary node, Market: ON_DEMAND, InstanceRole: MASTER,
+              InstanceType: m5.xlarge, InstanceCount: 1}]
+          KeepJobFlowAliveWhenNoSteps: true
+          TerminationProtected: false
+        Steps: [{Name: calculate_pi, ActionOnFailure: CONTINUE, HadoopJarStep: {Jar: command-runner.jar,
+              Args: [/usr/lib/spark/bin/run-example, SparkPi, '10']}}]
+        JobFlowRole: EMR_EC2_DefaultRole
+        ServiceRole: EMR_DefaultRole
+        LogUri: s3://test-emr-bucket/
+        SecurityConfiguration: EMR Runtime Role Security Configuration-test
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_job_flow
+      trigger_rule: all_success
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 60
+      dependencies: [configure_security_config]
+    modify_cluster:
+      operator: airflow.providers.amazon.aws.operators.emr.EmrModifyClusterOperator
+      aws_conn_id: aws_default
+      cluster_id: '{{ task_instance.xcom_pull(task_ids=''create_job_flow'', key=''return_value'')
+        }}'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      step_concurrency_level: 1
+      task_id: modify_cluster
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_job_flow]
+    add_steps:
+      operator: airflow.providers.amazon.aws.operators.emr.EmrAddStepsOperator
+      aws_conn_id: aws_default
+      cluster_states: []
+      deferrable: false
+      execution_role_arn: test-execution-role-arn
+      job_flow_id: '{{ task_instance.xcom_pull(task_ids=''create_job_flow'', key=''return_value'')
+        }}'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      steps: [{Name: calculate_pi, ActionOnFailure: CONTINUE, HadoopJarStep: {Jar: command-runner.jar,
+            Args: [/usr/lib/spark/bin/run-example, SparkPi, '10']}}]
+      task_id: add_steps
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      waiter_delay: 30
+      waiter_max_attempts: 60
+      dependencies: [create_job_flow, modify_cluster]
+    get_step_id:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_emr.get_step_id
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: get_step_id
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [add_steps]
+      decorator: airflow.decorators.task
+      step_ids: +add_steps
+    wait_for_step:
+      operator: airflow.providers.amazon.aws.sensors.emr.EmrStepSensor
+      aws_conn_id: aws_default
+      deferrable: false
+      failed_states: [CANCELLED, FAILED, INTERRUPTED]
+      job_flow_id: '{{ task_instance.xcom_pull(task_ids=''create_job_flow'', key=''return_value'')
+        }}'
+      max_attempts: 60
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      step_id: '{{ task_instance.xcom_pull(task_ids=''get_step_id'', key=''return_value'')
+        }}'
+      target_states: [COMPLETED]
+      task_id: wait_for_step
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [add_steps, create_job_flow, get_step_id]
+    remove_cluster:
+      operator: airflow.providers.amazon.aws.operators.emr.EmrTerminateJobFlowOperator
+      aws_conn_id: aws_default
+      deferrable: false
+      job_flow_id: '{{ task_instance.xcom_pull(task_ids=''create_job_flow'', key=''return_value'')
+        }}'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: remove_cluster
+      trigger_rule: all_done
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 20
+      dependencies: [wait_for_step, create_job_flow]
+    check_job_flow:
+      operator: airflow.providers.amazon.aws.sensors.emr.EmrJobFlowSensor
+      aws_conn_id: aws_default
+      deferrable: false
+      failed_states: [TERMINATED_WITH_ERRORS]
+      job_flow_id: '{{ task_instance.xcom_pull(task_ids=''create_job_flow'', key=''return_value'')
+        }}'
+      max_attempts: 60
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 10
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      target_states: [TERMINATED]
+      task_id: check_job_flow
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [remove_cluster, create_job_flow]
+    delete_security_config:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_emr.delete_security_config
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_security_config
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [check_job_flow]
+      decorator: airflow.decorators.task
+      config_name: EMR Runtime Role Security Configuration-test
+    create_s3_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-emr-bucket
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_s3_bucket
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    delete_s3_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-emr-bucket
+      force_delete: true
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_s3_bucket
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_security_config]

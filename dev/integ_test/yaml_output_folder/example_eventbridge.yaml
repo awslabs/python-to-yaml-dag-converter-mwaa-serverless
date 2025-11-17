@@ -1,0 +1,121 @@
+example_eventbridge:
+  dag_id: example_eventbridge
+  params: {}
+  default_args:
+    start_date:
+      __type__: datetime.datetime
+      year: 2026
+      month: 1
+      day: 1
+  schedule: '@once'
+  tasks:
+    put_events_task:
+      operator: airflow.providers.amazon.aws.operators.eventbridge.EventBridgePutEventsOperator
+      aws_conn_id: aws_default
+      entries:
+      - Detail: '{"event-name": "custom-event"}'
+        EventBusName: custom-bus
+        Source: example.myapp
+        DetailType: Sample Custom Event
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: put_events_task
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    put_rule_task:
+      operator: airflow.providers.amazon.aws.operators.eventbridge.EventBridgePutRuleOperator
+      aws_conn_id: aws_default
+      description: This rule matches events from example.myapp.
+      event_pattern: '{"source": ["example.myapp"]}'
+      name: example_rule
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      state: DISABLED
+      task_id: put_rule_task
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - put_events_task
+    enable_rule_task:
+      operator: airflow.providers.amazon.aws.operators.eventbridge.EventBridgeEnableRuleOperator
+      aws_conn_id: aws_default
+      name: example_rule
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: enable_rule_task
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - put_rule_task
+    disable_rule_task:
+      operator: airflow.providers.amazon.aws.operators.eventbridge.EventBridgeDisableRuleOperator
+      aws_conn_id: aws_default
+      name: example_rule
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: disable_rule_task
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - enable_rule_task
+  auto_register: true
+  catchup: true
+  dag_display_name: example_eventbridge
+  fail_fast: false
+  max_active_runs: 16
+  max_active_tasks: 16
+  max_consecutive_failed_dag_runs: 0
+  owner_links: {}
+  render_template_as_native_obj: false
+  start_date:
+    __type__: datetime.datetime
+    year: 2026
+    month: 1
+    day: 1
+  tags: []
+  template_undefined: jinja2.runtime.StrictUndefined

@@ -1,0 +1,119 @@
+example_appflow:
+  dag_id: example_appflow
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    campaign_dump_full:
+      operator: airflow.providers.amazon.aws.operators.appflow.AppflowRunFullOperator
+      aws_conn_id: aws_default
+      flow_name: test-salesforce-campaign
+      max_attempts: 60
+      outlets: []
+      params: {}
+      poll_interval: 20
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      source: salesforce
+      task_id: campaign_dump_full
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      dependencies: []
+    campaign_dump_daily:
+      operator: airflow.providers.amazon.aws.operators.appflow.AppflowRunDailyOperator
+      aws_conn_id: aws_default
+      filter_date: '{{ ds }}'
+      flow_name: test-salesforce-campaign
+      max_attempts: 60
+      outlets: []
+      params: {}
+      poll_interval: 20
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      source: salesforce
+      source_field: LastModifiedDate
+      task_id: campaign_dump_daily
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      dependencies: [campaign_dump_full]
+    campaign_dump_before:
+      operator: airflow.providers.amazon.aws.operators.appflow.AppflowRunBeforeOperator
+      aws_conn_id: aws_default
+      filter_date: '{{ ds }}'
+      flow_name: test-salesforce-campaign
+      max_attempts: 60
+      outlets: []
+      params: {}
+      poll_interval: 20
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      source: salesforce
+      source_field: LastModifiedDate
+      task_id: campaign_dump_before
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      dependencies: [campaign_dump_daily]
+    campaign_dump_after:
+      operator: airflow.providers.amazon.aws.operators.appflow.AppflowRunAfterOperator
+      aws_conn_id: aws_default
+      filter_date: '3000-01-01'
+      flow_name: test-salesforce-campaign
+      max_attempts: 60
+      outlets: []
+      params: {}
+      poll_interval: 20
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      source: salesforce
+      source_field: LastModifiedDate
+      task_id: campaign_dump_after
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      dependencies: [campaign_dump_before]
+    campaign_dump_short_circuit:
+      operator: airflow.providers.amazon.aws.operators.appflow.AppflowRecordsShortCircuitOperator
+      aws_conn_id: aws_default
+      ignore_downstream_trigger_rules: true
+      op_args: []
+      op_kwargs:
+        flow_name: test-salesforce-campaign
+        appflow_run_task_id: campaign_dump_after
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow.providers.amazon.aws.operators.appflow._has_new_records_func
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: campaign_dump_short_circuit
+      trigger_rule: all_success
+      wait_for_downstream: false
+      flow_name: test-salesforce-campaign
+      appflow_run_task_id: campaign_dump_after
+      dependencies: [campaign_dump_after]
+    should_be_skipped:
+      operator: airflow.providers.standard.operators.bash.BashOperator
+      bash_command: echo 1
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: should_be_skipped
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [campaign_dump_short_circuit]

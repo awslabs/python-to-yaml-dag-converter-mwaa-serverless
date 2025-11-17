@@ -1,0 +1,71 @@
+example_neptune:
+  dag_id: example_neptune
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    start_task:
+      operator: airflow.providers.amazon.aws.operators.neptune.NeptuneStartDbClusterOperator
+      aws_conn_id: aws_default
+      deferrable: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: start_task
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      waiter_delay: 30
+      waiter_max_attempts: 60
+      db_cluster_id: test-cluster
+      dependencies: [create_cluster]
+    stop_task:
+      operator: airflow.providers.amazon.aws.operators.neptune.NeptuneStopDbClusterOperator
+      aws_conn_id: aws_default
+      deferrable: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: stop_task
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      waiter_delay: 30
+      waiter_max_attempts: 60
+      db_cluster_id: test-cluster
+      dependencies: [start_task]
+    create_cluster:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_neptune.create_cluster
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_cluster
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      decorator: airflow.decorators.task
+      cluster_id: test-cluster
+    delete_cluster:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_neptune.delete_cluster
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_cluster
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [stop_task]
+      decorator: airflow.decorators.task
+      cluster_id: test-cluster

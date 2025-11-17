@@ -1,0 +1,201 @@
+s3_dtm_example:
+  dag_id: s3_dtm_example
+  params: {}
+  default_args:
+    start_date:
+      __type__: datetime.datetime
+      year: 2026
+      month: 1
+      day: 1
+  schedule: '@daily'
+  tasks:
+    create_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: dtm-example-bucket
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: create_bucket
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    create_object_0:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
+      aws_conn_id: aws_default
+      data: This is a test file
+      encrypt: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replace: true
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: dtm-example-bucket
+      s3_key: data/file_0.txt
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: create_object_0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - create_bucket
+    create_object_1:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
+      aws_conn_id: aws_default
+      data: This is a test file
+      encrypt: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replace: true
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: dtm-example-bucket
+      s3_key: data/file_1.txt
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: create_object_1
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - create_bucket
+    create_object_2:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
+      aws_conn_id: aws_default
+      data: This is a test file
+      encrypt: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replace: true
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: dtm-example-bucket
+      s3_key: data/file_2.txt
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: create_object_2
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - create_bucket
+    list_objects:
+      operator: airflow.providers.amazon.aws.operators.s3.S3ListOperator
+      apply_wildcard: false
+      aws_conn_id: aws_default
+      bucket: dtm-example-bucket
+      delimiter: ''
+      outlets: []
+      params: {}
+      prefix: ''
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: list_objects
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - create_object_0
+      - create_object_2
+      - create_object_1
+    delete_objects:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteObjectsOperator
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: delete_objects
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - list_objects
+      expand:
+        keys: list_objects.output
+      partial:
+        bucket: dtm-example-bucket
+        weight_rule: downstream
+    delete_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: dtm-example-bucket
+      force_delete: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: delete_bucket
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - delete_objects
+  auto_register: true
+  catchup: true
+  dag_display_name: s3_dtm_example
+  fail_fast: false
+  max_active_runs: 16
+  max_active_tasks: 16
+  max_consecutive_failed_dag_runs: 0
+  owner_links: {}
+  render_template_as_native_obj: false
+  start_date:
+    __type__: datetime.datetime
+    year: 2026
+    month: 1
+    day: 1
+  tags: []
+  template_undefined: jinja2.runtime.StrictUndefined

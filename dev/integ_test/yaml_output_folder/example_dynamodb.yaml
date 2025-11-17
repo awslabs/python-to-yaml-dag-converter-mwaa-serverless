@@ -1,0 +1,81 @@
+example_dynamodb:
+  dag_id: example_dynamodb
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    create_table:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_dynamodb.create_table
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_table
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      decorator: airflow.decorators.task
+      table_name: test-dynamodb-table
+    delete_table:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_dynamodb.delete_table
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_table
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [waiting_for_dynamodb_item_any_value]
+      decorator: airflow.decorators.task
+      table_name: test-dynamodb-table
+    waiting_for_dynamodb_item_value:
+      operator: airflow.providers.amazon.aws.sensors.dynamodb.DynamoDBValueSensor
+      attribute_name: Value
+      attribute_value: Testing
+      aws_conn_id: aws_default
+      mode: poke
+      outlets: []
+      params: {}
+      partition_key_name: PK
+      partition_key_value: Test
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      sort_key_name: SK
+      sort_key_value: 2022-07-12T11:11:25-0400
+      table_name: test-dynamodb-table
+      task_id: waiting_for_dynamodb_item_value
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_table]
+    waiting_for_dynamodb_item_any_value:
+      operator: airflow.providers.amazon.aws.sensors.dynamodb.DynamoDBValueSensor
+      attribute_name: Value
+      attribute_value: [Foo, Testing, Bar]
+      aws_conn_id: aws_default
+      mode: poke
+      outlets: []
+      params: {}
+      partition_key_name: PK
+      partition_key_value: Test
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      sort_key_name: SK
+      sort_key_value: 2022-07-12T11:11:25-0400
+      table_name: test-dynamodb-table
+      task_id: waiting_for_dynamodb_item_any_value
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [waiting_for_dynamodb_item_value]

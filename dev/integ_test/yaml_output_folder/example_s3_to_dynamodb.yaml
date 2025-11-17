@@ -1,0 +1,174 @@
+example_s3_to_dynamodb:
+  dag_id: example_s3_to_dynamodb
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    set_up_table:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_s3_to_dynamodb.set_up_table
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: set_up_table
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      decorator: airflow.decorators.task
+      table_name: test-ex-dynamodb-table
+    create_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-dynamodb-bucket
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_bucket
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [set_up_table]
+    create_object:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
+      aws_conn_id: aws_default
+      data: |
+        cocktail_id,cocktail_name,base_spirit
+        1,Caipirinha,Cachaca
+        2,Bramble,Gin
+        3,Daiquiri,Rum
+      encrypt: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replace: true
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: test-dynamodb-bucket
+      s3_key: test/files/cocktail_list.csv
+      task_id: create_object
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [wait_for_bucket]
+    s3_to_dynamodb:
+      operator: airflow.providers.amazon.aws.transfers.s3_to_dynamodb.S3ToDynamoDBOperator
+      aws_conn_id: aws_default
+      billing_mode: PAY_PER_REQUEST
+      check_interval: 30
+      delete_on_error: false
+      dynamodb_attributes: [{AttributeName: cocktail_id, AttributeType: S}]
+      dynamodb_key_schema: [{AttributeName: cocktail_id, KeyType: HASH}]
+      dynamodb_table_name: test-new-dynamodb-table
+      dynamodb_tmp_table_prefix: tmp
+      import_table_kwargs:
+        InputFormatOptions:
+          Csv:
+            Delimiter: ','
+      input_format: CSV
+      max_attempts: 240
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: test-dynamodb-bucket
+      s3_key: test/files/cocktail_list.csv
+      task_id: s3_to_dynamodb
+      trigger_rule: all_success
+      use_existing_table: false
+      wait_for_completion: true
+      wait_for_downstream: false
+      dependencies: [create_object]
+    s3_to_dynamodb_new_table:
+      operator: airflow.providers.amazon.aws.transfers.s3_to_dynamodb.S3ToDynamoDBOperator
+      aws_conn_id: aws_default
+      billing_mode: PAY_PER_REQUEST
+      check_interval: 30
+      delete_on_error: false
+      dynamodb_attributes: [{AttributeName: cocktail_id, AttributeType: S}]
+      dynamodb_key_schema: [{AttributeName: cocktail_id, KeyType: HASH}]
+      dynamodb_table_name: test-ex-dynamodb-table
+      dynamodb_tmp_table_prefix: tmp
+      import_table_kwargs:
+        InputFormatOptions:
+          Csv:
+            Delimiter: ','
+      input_format: CSV
+      max_attempts: 240
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: test-dynamodb-bucket
+      s3_key: test/files/cocktail_list.csv
+      task_id: s3_to_dynamodb_new_table
+      trigger_rule: all_success
+      use_existing_table: true
+      wait_for_completion: true
+      wait_for_downstream: false
+      dependencies: [s3_to_dynamodb]
+    delete_dynamodb_table:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_s3_to_dynamodb.delete_dynamodb_table
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_dynamodb_table
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [s3_to_dynamodb_new_table]
+      decorator: airflow.decorators.task
+      table_name: test-ex-dynamodb-table
+    delete_dynamodb_table__1:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_s3_to_dynamodb.delete_dynamodb_table
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_dynamodb_table
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_dynamodb_table]
+      decorator: airflow.decorators.task
+      table_name: test-new-dynamodb-table
+    delete_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-dynamodb-bucket
+      force_delete: true
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_bucket
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_dynamodb_table__1]
+    wait_for_bucket:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_s3_to_dynamodb.wait_for_bucket
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: wait_for_bucket
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_bucket]
+      decorator: airflow.decorators.task
+      s3_bucket_name: test-dynamodb-bucket

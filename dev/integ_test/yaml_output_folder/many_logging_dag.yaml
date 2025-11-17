@@ -1,0 +1,200 @@
+many_logging_dag:
+  dag_id: many_logging_dag
+  params: {}
+  default_args:
+    owner: airflow
+    start_date: '2026-01-01'
+    depends_on_past: false
+    email: [airflow@example.com]
+    email_on_failure: false
+    email_on_retry: false
+    retries: 0
+  schedule: 0 0 * * ? *
+  tasks:
+    tasks_start:
+      operator: airflow.providers.standard.operators.empty.EmptyOperator
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: tasks_start
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    tasks_end:
+      operator: airflow.providers.standard.operators.empty.EmptyOperator
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: tasks_end
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [logging_task_5, logging_task_8, logging_task_3, logging_task_6,
+        logging_task_2, logging_task_4, logging_task_9, logging_task_7, logging_task_10,
+        logging_task_1]
+    logging_task_1:
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      op_args: []
+      op_kwargs:
+        task_id: logging_task_1
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: python_mwaa_4.publish_many_log
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: logging_task_1
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [tasks_start]
+    logging_task_2:
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      op_args: []
+      op_kwargs:
+        task_id: logging_task_2
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: python_mwaa_4.publish_many_log
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: logging_task_2
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [tasks_start]
+    logging_task_3:
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      op_args: []
+      op_kwargs:
+        task_id: logging_task_3
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: python_mwaa_4.publish_many_log
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: logging_task_3
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [tasks_start]
+    logging_task_4:
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      op_args: []
+      op_kwargs:
+        task_id: logging_task_4
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: python_mwaa_4.publish_many_log
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: logging_task_4
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [tasks_start]
+    logging_task_5:
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      op_args: []
+      op_kwargs:
+        task_id: logging_task_5
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: python_mwaa_4.publish_many_log
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: logging_task_5
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [tasks_start]
+    logging_task_6:
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      op_args: []
+      op_kwargs:
+        task_id: logging_task_6
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: python_mwaa_4.publish_many_log
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: logging_task_6
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [tasks_start]
+    logging_task_7:
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      op_args: []
+      op_kwargs:
+        task_id: logging_task_7
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: python_mwaa_4.publish_many_log
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: logging_task_7
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [tasks_start]
+    logging_task_8:
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      op_args: []
+      op_kwargs:
+        task_id: logging_task_8
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: python_mwaa_4.publish_many_log
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: logging_task_8
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [tasks_start]
+    logging_task_9:
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      op_args: []
+      op_kwargs:
+        task_id: logging_task_9
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: python_mwaa_4.publish_many_log
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: logging_task_9
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [tasks_start]
+    logging_task_10:
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      op_args: []
+      op_kwargs:
+        task_id: logging_task_10
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: python_mwaa_4.publish_many_log
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: logging_task_10
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [tasks_start]
+  is_paused_upon_creation: false

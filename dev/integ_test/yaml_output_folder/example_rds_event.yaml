@@ -1,0 +1,116 @@
+example_rds_event:
+  dag_id: example_rds_event
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    create_sns_topic:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_rds_event.create_sns_topic
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_sns_topic
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      decorator: airflow.decorators.task
+      env_id: test
+    create_db_instance:
+      operator: airflow.providers.amazon.aws.operators.rds.RdsCreateDbInstanceOperator
+      aws_conn_id: aws_default
+      db_instance_class: db.t4g.micro
+      db_instance_identifier: test-instance
+      deferrable: false
+      engine: postgres
+      outlets: []
+      params: {}
+      priority_weight: 1
+      rds_kwargs:
+        MasterUsername: rds_username
+        MasterUserPassword: rds_password
+        AllocatedStorage: 20
+        DBName: test_db
+        PubliclyAccessible: false
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_db_instance
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      waiter_delay: 30
+      waiter_max_attempts: 60
+      dependencies: [create_sns_topic]
+    create_subscription:
+      operator: airflow.providers.amazon.aws.operators.rds.RdsCreateEventSubscriptionOperator
+      aws_conn_id: aws_default
+      enabled: true
+      event_categories: [availability]
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      sns_topic_arn: '{{ task_instance.xcom_pull(task_ids=''create_sns_topic'', key=''return_value'')
+        }}'
+      source_ids: [test-instance]
+      source_type: db-instance
+      subscription_name: test-subscription
+      task_id: create_subscription
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      dependencies: [create_sns_topic, create_db_instance]
+    delete_subscription:
+      operator: airflow.providers.amazon.aws.operators.rds.RdsDeleteEventSubscriptionOperator
+      aws_conn_id: aws_default
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      subscription_name: test-subscription
+      task_id: delete_subscription
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [create_subscription]
+    delete_db_instance:
+      operator: airflow.providers.amazon.aws.operators.rds.RdsDeleteDbInstanceOperator
+      aws_conn_id: aws_default
+      db_instance_identifier: test-instance
+      deferrable: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      rds_kwargs:
+        SkipFinalSnapshot: true
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_db_instance
+      trigger_rule: all_done
+      wait_for_completion: true
+      wait_for_downstream: false
+      waiter_delay: 30
+      waiter_max_attempts: 60
+      dependencies: [delete_subscription]
+    delete_sns_topic:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_rds_event.delete_sns_topic
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_sns_topic
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_db_instance, create_sns_topic]
+      decorator: airflow.decorators.task
+      topic_arn: +create_sns_topic

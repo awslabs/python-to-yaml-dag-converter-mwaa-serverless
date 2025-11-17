@@ -1,0 +1,130 @@
+example_sagemaker_pipeline:
+  dag_id: example_sagemaker_pipeline
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    create_pipeline:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_sagemaker_pipeline.create_pipeline
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_pipeline
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      decorator: airflow.decorators.task
+      name: test-pipeline
+      role_arn: test-role-arn
+    start_pipeline1:
+      operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerStartPipelineOperator
+      aws_conn_id: aws_default
+      check_interval: 30
+      deferrable: false
+      display_name: airflow-triggered-execution
+      outlets: []
+      params: {}
+      pipeline_name: test-pipeline
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: start_pipeline1
+      trigger_rule: all_success
+      verbose: true
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_max_attempts: 9999
+      dependencies: [create_pipeline]
+    stop_pipeline1:
+      operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerStopPipelineOperator
+      aws_conn_id: aws_default
+      check_interval: 30
+      deferrable: false
+      fail_if_not_running: false
+      outlets: []
+      params: {}
+      pipeline_exec_arn: '{{ task_instance.xcom_pull(task_ids=''start_pipeline1'',
+        key=''return_value'') }}'
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: stop_pipeline1
+      trigger_rule: all_success
+      verbose: true
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_max_attempts: 9999
+      dependencies: [start_pipeline2, start_pipeline1]
+    start_pipeline2:
+      operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerStartPipelineOperator
+      aws_conn_id: aws_default
+      check_interval: 30
+      deferrable: false
+      display_name: airflow-triggered-execution
+      outlets: []
+      params: {}
+      pipeline_name: test-pipeline
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: start_pipeline2
+      trigger_rule: all_success
+      verbose: true
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_max_attempts: 9999
+      dependencies: [start_pipeline1]
+    await_pipeline2:
+      operator: airflow.providers.amazon.aws.sensors.sagemaker.SageMakerPipelineSensor
+      aws_conn_id: aws_default
+      mode: poke
+      outlets: []
+      params: {}
+      pipeline_exec_arn: '{{ task_instance.xcom_pull(task_ids=''start_pipeline2'',
+        key=''return_value'') }}'
+      poke_interval: 10
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: await_pipeline2
+      timeout: 604800.0
+      trigger_rule: all_success
+      verbose: true
+      wait_for_downstream: false
+      dependencies: [stop_pipeline1, start_pipeline2]
+    delete_pipeline:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_sagemaker_pipeline.delete_pipeline
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_pipeline
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [await_pipeline2]
+      decorator: airflow.decorators.task
+      name: test-pipeline
+    delete_experiments:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_sagemaker_pipeline.delete_experiments
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_experiments
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_pipeline]
+      decorator: airflow.decorators.task
+      experiment_names: [test-pipeline]
