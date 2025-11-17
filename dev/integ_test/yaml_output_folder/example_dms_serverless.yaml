@@ -1,0 +1,215 @@
+example_dms_serverless:
+  dag_id: example_dms_serverless
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    create_s3_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-dms-serverless-bucket
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_s3_bucket
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    create_db_instance:
+      operator: airflow.providers.amazon.aws.operators.rds.RdsCreateDbInstanceOperator
+      aws_conn_id: aws_default
+      db_instance_class: db.t3.micro
+      db_instance_identifier: test-instance
+      deferrable: false
+      engine: postgres
+      outlets: []
+      params: {}
+      priority_weight: 1
+      rds_kwargs:
+        DBName: test_source_database
+        AllocatedStorage: 20
+        MasterUsername: username
+        MasterUserPassword: rds_password
+        PubliclyAccessible: true
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_db_instance
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      waiter_delay: 30
+      waiter_max_attempts: 60
+      dependencies: [create_s3_bucket]
+    create_dms_assets:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_dms_serverless.create_dms_assets
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_dms_assets
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_sample_table]
+      decorator: airflow.decorators.task
+      db_name: test_source_database
+      instance_name: test-instance
+      bucket_name: test-dms-serverless-bucket
+      role_arn: test
+      source_endpoint_identifier: test-source-endpoint
+      target_endpoint_identifier: test-target-endpoint
+      table_definition:
+        TableCount: '1'
+        Tables: [{TableName: test-table, TableColumns: [{ColumnName: apache_project,
+                ColumnType: STRING, ColumnNullable: 'false', ColumnIsPk: 'true'},
+              {ColumnName: release_year, ColumnType: STRING, ColumnLength: '4'}],
+            TableColumnsTotal: '2'}]
+    create_replication_config:
+      operator: airflow.providers.amazon.aws.operators.dms.DmsCreateReplicationConfigOperator
+      additional_config_kwargs: {}
+      aws_conn_id: aws_default
+      compute_config:
+        MaxCapacityUnits: 4
+        MinCapacityUnits: 1
+        MultiAZ: false
+        ReplicationSubnetGroupId: default
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replication_config_id: test-replication-id
+      replication_type: full-load
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      source_endpoint_arn: '{{ task_instance.xcom_pull(task_ids=''create_dms_assets'',
+        key=''source_endpoint_arn'') }}'
+      table_mappings: '{"rules": [{"rule-type": "selection", "rule-id": "1", "rule-name":
+        "1", "object-locator": {"schema-name": "public", "table-name": "test-table"},
+        "rule-action": "include"}]}'
+      target_endpoint_arn: '{{ task_instance.xcom_pull(task_ids=''create_dms_assets'',
+        key=''target_endpoint_arn'') }}'
+      task_id: create_replication_config
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_dms_assets]
+    describe_replication_configs:
+      operator: airflow.providers.amazon.aws.operators.dms.DmsDescribeReplicationConfigsOperator
+      aws_conn_id: aws_default
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: describe_replication_configs
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_replication_config]
+    describe_replications:
+      operator: airflow.providers.amazon.aws.operators.dms.DmsDescribeReplicationsOperator
+      aws_conn_id: aws_default
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: describe_replications
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [describe_replication_configs]
+    delete_replication_config:
+      operator: airflow.providers.amazon.aws.operators.dms.DmsDeleteReplicationConfigOperator
+      aws_conn_id: aws_default
+      deferrable: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replication_config_arn: '{{ task_instance.xcom_pull(task_ids=''create_replication_config'',
+        key=''return_value'') }}'
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_replication_config
+      trigger_rule: all_done
+      wait_for_completion: true
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 200
+      dependencies: [describe_replications]
+    delete_dms_assets:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_dms_serverless.delete_dms_assets
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_dms_assets
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_replication_config, create_dms_assets]
+      decorator: airflow.decorators.task
+      source_endpoint_arn: '{{ task_instance.xcom_pull(task_ids=''create_dms_assets'',
+        key=''source_endpoint_arn'') }}'
+      target_endpoint_arn: '{{ task_instance.xcom_pull(task_ids=''create_dms_assets'',
+        key=''target_endpoint_arn'') }}'
+      source_endpoint_identifier: test-source-endpoint
+      target_endpoint_identifier: test-target-endpoint
+    delete_db_instance:
+      operator: airflow.providers.amazon.aws.operators.rds.RdsDeleteDbInstanceOperator
+      aws_conn_id: aws_default
+      db_instance_identifier: test-instance
+      deferrable: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      rds_kwargs:
+        SkipFinalSnapshot: true
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_db_instance
+      trigger_rule: all_done
+      wait_for_completion: true
+      wait_for_downstream: false
+      waiter_delay: 30
+      waiter_max_attempts: 60
+      dependencies: [delete_dms_assets]
+    delete_s3_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-dms-serverless-bucket
+      force_delete: true
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_s3_bucket
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_db_instance]
+    create_sample_table:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_dms_serverless.create_sample_table
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_sample_table
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_db_instance]
+      decorator: airflow.decorators.task
+      instance_name: test-instance
+      db_name: test_source_database
+      table_name: test-table

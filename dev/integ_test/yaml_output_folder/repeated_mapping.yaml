@@ -1,0 +1,26 @@
+repeated_mapping:
+  dag_id: repeated_mapping
+  params: {}
+  default_args:
+    start_date: '2026-04-02'
+  schedule: 0 0 * * ? *
+  tasks:
+    add:
+      operator: airflow.providers.standard.decorators.python._PythonDecoratedOperator
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: dtm_multiple_params.add
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: add
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      expand:
+        x: [2, 4, 8]
+        y: [5, 10]
+      partial:
+        op_args: []
+        op_kwargs: {}

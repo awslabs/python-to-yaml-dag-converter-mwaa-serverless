@@ -1,0 +1,198 @@
+example_eks_with_nodegroups:
+  dag_id: example_eks_with_nodegroups
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    create_cluster:
+      operator: airflow.providers.amazon.aws.operators.eks.EksCreateClusterOperator
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      cluster_role_arn: test-role-arn
+      create_cluster_kwargs: {}
+      create_fargate_profile_kwargs: {}
+      create_nodegroup_kwargs: {}
+      deferrable: false
+      fargate_profile_name: profile
+      fargate_selectors: [{namespace: default}]
+      nodegroup_name: nodegroup
+      outlets: []
+      params: {}
+      priority_weight: 1
+      resources_vpc_config:
+        subnetIds: [subnet-12345ab, subnet-67890cd]
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_cluster
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 30
+      waiter_max_attempts: 40
+      dependencies: [create_launch_template]
+    await_create_cluster:
+      operator: airflow.providers.amazon.aws.sensors.eks.EksClusterStateSensor
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      target_state: ACTIVE
+      task_id: await_create_cluster
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_cluster]
+    create_nodegroup:
+      operator: airflow.providers.amazon.aws.operators.eks.EksCreateNodegroupOperator
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      create_nodegroup_kwargs:
+        launchTemplate:
+          name: test-launch-template
+      deferrable: false
+      nodegroup_name: test-nodegroup
+      nodegroup_role_arn: test-role-arn
+      nodegroup_subnets: [subnet-12345ab, subnet-67890cd]
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_nodegroup
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 30
+      waiter_max_attempts: 80
+      dependencies: [await_create_cluster]
+    await_create_nodegroup:
+      operator: airflow.providers.amazon.aws.sensors.eks.EksNodegroupStateSensor
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      mode: poke
+      nodegroup_name: test-nodegroup
+      outlets: []
+      params: {}
+      poke_interval: 10
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      target_state: ACTIVE
+      task_id: await_create_nodegroup
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_nodegroup]
+    delete_nodegroup:
+      operator: airflow.providers.amazon.aws.operators.eks.EksDeleteNodegroupOperator
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      deferrable: false
+      nodegroup_name: test-nodegroup
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_nodegroup
+      trigger_rule: all_done
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 30
+      waiter_max_attempts: 40
+      dependencies: [await_create_nodegroup]
+    await_delete_nodegroup:
+      operator: airflow.providers.amazon.aws.sensors.eks.EksNodegroupStateSensor
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      mode: poke
+      nodegroup_name: test-nodegroup
+      outlets: []
+      params: {}
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      target_state: NONEXISTENT
+      task_id: await_delete_nodegroup
+      timeout: 604800.0
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_nodegroup]
+    delete_cluster:
+      operator: airflow.providers.amazon.aws.operators.eks.EksDeleteClusterOperator
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      deferrable: false
+      force_delete_compute: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_cluster
+      trigger_rule: all_done
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 30
+      waiter_max_attempts: 40
+      dependencies: [await_delete_nodegroup]
+    await_delete_cluster:
+      operator: airflow.providers.amazon.aws.sensors.eks.EksClusterStateSensor
+      aws_conn_id: aws_default
+      cluster_name: test-cluster
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 10
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      target_state: NONEXISTENT
+      task_id: await_delete_cluster
+      timeout: 604800.0
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_cluster]
+    create_launch_template:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_eks_nodegroups.create_launch_template
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_launch_template
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      decorator: airflow.decorators.task
+      template_name: test-launch-template
+    delete_launch_template:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_eks_nodegroups.delete_launch_template
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_launch_template
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [await_delete_cluster]
+      decorator: airflow.decorators.task
+      template_name: test-launch-template

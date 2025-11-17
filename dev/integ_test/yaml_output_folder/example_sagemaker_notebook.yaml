@@ -1,0 +1,144 @@
+example_sagemaker_notebook:
+  dag_id: example_sagemaker_notebook
+  params: {}
+  default_args:
+    start_date:
+      __type__: datetime.datetime
+      year: 2026
+      month: 1
+      day: 1
+  schedule: '@once'
+  tasks:
+    create_instance:
+      operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerCreateNotebookOperator
+      aws_conn_id: aws_default
+      create_instance_kwargs: {}
+      instance_name: test-test-notebook
+      instance_type: ml.t3.medium
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      role_arn: test-role-arn
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: create_instance
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      dependencies: []
+    stop_instance:
+      operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerStopNotebookOperator
+      aws_conn_id: aws_default
+      instance_name: test-test-notebook
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: stop_instance
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      dependencies:
+      - create_instance
+    start_instance:
+      operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerStartNoteBookOperator
+      aws_conn_id: aws_default
+      instance_name: test-test-notebook
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: start_instance
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      dependencies:
+      - stop_instance
+    stop_instance_before_delete:
+      operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerStopNotebookOperator
+      aws_conn_id: aws_default
+      instance_name: test-test-notebook
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: stop_instance_before_delete
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      dependencies:
+      - start_instance
+    delete_instance:
+      operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerDeleteNotebookOperator
+      aws_conn_id: aws_default
+      instance_name: test-test-notebook
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: delete_instance
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      dependencies:
+      - stop_instance_before_delete
+  auto_register: true
+  catchup: true
+  dag_display_name: example_sagemaker_notebook
+  fail_fast: false
+  max_active_runs: 16
+  max_active_tasks: 16
+  max_consecutive_failed_dag_runs: 0
+  owner_links: {}
+  render_template_as_native_obj: false
+  start_date:
+    __type__: datetime.datetime
+    year: 2026
+    month: 1
+    day: 1
+  tags: []
+  template_undefined: jinja2.runtime.StrictUndefined

@@ -1,0 +1,56 @@
+example_sagemaker_unified_studio:
+  dag_id: example_sagemaker_unified_studio
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    mock_mwaa_environment:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_sagemaker_unified_studio.mock_mwaa_environment
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: mock_mwaa_environment
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      decorator: airflow.decorators.task
+      parameters:
+        AIRFLOW__WORKFLOWS__DATAZONE_DOMAIN_ID: test-domain-id
+        AIRFLOW__WORKFLOWS__DATAZONE_PROJECT_ID: test-project-id
+        AIRFLOW__WORKFLOWS__DATAZONE_ENVIRONMENT_ID: test-environment-id
+        AIRFLOW__WORKFLOWS__DATAZONE_SCOPE_NAME: dev
+        AIRFLOW__WORKFLOWS__DATAZONE_STAGE: prod
+        AIRFLOW__WORKFLOWS__DATAZONE_ENDPOINT: https://datazone.us-east-1.api.aws
+        AIRFLOW__WORKFLOWS__PROJECT_S3_PATH: test-s3-path
+        AIRFLOW__WORKFLOWS__DATAZONE_DOMAIN_REGION: us-east-1
+    run-notebook:
+      operator: airflow.providers.amazon.aws.operators.sagemaker_unified_studio.SageMakerNotebookOperator
+      compute:
+        instance_type: ml.m5.large
+        volume_size_in_gb: 30
+      deferrable: false
+      input_config:
+        input_path: test_notebook.ipynb
+        input_params: {}
+      outlets: []
+      output_config:
+        output_formats: [NOTEBOOK]
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      tags: {}
+      task_id: run-notebook
+      termination_condition:
+        max_runtime_in_seconds: 600
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      waiter_delay: 5
+      waiter_max_attempts: 1440
+      dependencies: [mock_mwaa_environment]

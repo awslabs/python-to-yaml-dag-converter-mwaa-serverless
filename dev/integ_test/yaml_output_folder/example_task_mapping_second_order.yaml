@@ -1,0 +1,56 @@
+example_task_mapping_second_order:
+  dag_id: example_task_mapping_second_order
+  params: {}
+  default_args:
+    start_date: '2026-03-04'
+  schedule: 0 0 * * ? *
+  tasks:
+    get_nums:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: dtm_simple.get_nums
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: get_nums
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      decorator: airflow.decorators.task
+    times_2:
+      operator: airflow.providers.standard.decorators.python._PythonDecoratedOperator
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: dtm_simple.times_2
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: times_2
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [get_nums]
+      expand:
+        num: +get_nums
+      partial:
+        op_args: []
+        op_kwargs: {}
+    add_10:
+      operator: airflow.providers.standard.decorators.python._PythonDecoratedOperator
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: dtm_simple.add_10
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: add_10
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [times_2]
+      expand:
+        num: +times_2
+      partial:
+        op_args: []
+        op_kwargs: {}

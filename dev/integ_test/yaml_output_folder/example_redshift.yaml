@@ -1,0 +1,444 @@
+example_redshift:
+  dag_id: example_redshift
+  params: {}
+  default_args:
+    start_date:
+      __type__: datetime.datetime
+      year: 2026
+      month: 1
+      day: 1
+  schedule: '@once'
+  tasks:
+    create_cluster:
+      operator: airflow.providers.amazon.aws.operators.redshift_cluster.RedshiftCreateClusterOperator
+      allow_version_upgrade: true
+      automated_snapshot_retention_period: 1
+      aws_conn_id: aws_default
+      cluster_identifier: test-redshift-cluster
+      cluster_subnet_group_name: test-cluster-subnet-group-name
+      cluster_type: single-node
+      cluster_version: '1.0'
+      db_name: dev
+      deferrable: false
+      encrypted: false
+      enhanced_vpc_routing: false
+      master_user_password: MyAmazonPassword1
+      master_username: adminuser
+      max_attempt: 5
+      node_type: dc2.large
+      number_of_nodes: 1
+      outlets: []
+      params: {}
+      poll_interval: 60
+      port: 5439
+      priority_weight: 1
+      publicly_accessible: false
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: create_cluster
+      trigger_rule: all_success
+      vpc_security_group_ids:
+      - test-security-group-id
+      wait_for_completion: false
+      wait_for_downstream: false
+      dependencies: []
+    wait_cluster_available:
+      operator: airflow.providers.amazon.aws.sensors.redshift_cluster.RedshiftClusterSensor
+      aws_conn_id: aws_default
+      cluster_identifier: test-redshift-cluster
+      deferrable: false
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 15
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      target_status: available
+      task_id: wait_cluster_available
+      timeout: 1800
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - create_cluster
+    create_cluster_snapshot:
+      operator: airflow.providers.amazon.aws.operators.redshift_cluster.RedshiftCreateClusterSnapshotOperator
+      aws_conn_id: aws_default
+      cluster_identifier: test-redshift-cluster
+      deferrable: false
+      max_attempt: 100
+      outlets: []
+      params: {}
+      poll_interval: 30
+      priority_weight: 1
+      retention_period: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      snapshot_identifier: test-snapshot
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: create_cluster_snapshot
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      dependencies:
+      - wait_cluster_available
+    wait_cluster_available_before_pause:
+      operator: airflow.providers.amazon.aws.sensors.redshift_cluster.RedshiftClusterSensor
+      aws_conn_id: aws_default
+      cluster_identifier: test-redshift-cluster
+      deferrable: false
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 15
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      target_status: available
+      task_id: wait_cluster_available_before_pause
+      timeout: 1800
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - create_cluster_snapshot
+    pause_cluster:
+      operator: airflow.providers.amazon.aws.operators.redshift_cluster.RedshiftPauseClusterOperator
+      aws_conn_id: aws_default
+      cluster_identifier: test-redshift-cluster
+      deferrable: false
+      max_attempts: 30
+      outlets: []
+      params: {}
+      poll_interval: 30
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: pause_cluster
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      dependencies:
+      - wait_cluster_available_before_pause
+    wait_cluster_paused:
+      operator: airflow.providers.amazon.aws.sensors.redshift_cluster.RedshiftClusterSensor
+      aws_conn_id: aws_default
+      cluster_identifier: test-redshift-cluster
+      deferrable: false
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 30
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      target_status: paused
+      task_id: wait_cluster_paused
+      timeout: 1800
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - pause_cluster
+    resume_cluster:
+      operator: airflow.providers.amazon.aws.operators.redshift_cluster.RedshiftResumeClusterOperator
+      aws_conn_id: aws_default
+      cluster_identifier: test-redshift-cluster
+      deferrable: false
+      max_attempts: 30
+      outlets: []
+      params: {}
+      poll_interval: 30
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: resume_cluster
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      dependencies:
+      - wait_cluster_paused
+    wait_cluster_available_after_resume:
+      operator: airflow.providers.amazon.aws.sensors.redshift_cluster.RedshiftClusterSensor
+      aws_conn_id: aws_default
+      cluster_identifier: test-redshift-cluster
+      deferrable: false
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 30
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      target_status: available
+      task_id: wait_cluster_available_after_resume
+      timeout: 1800
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - resume_cluster
+    create_table_redshift_data:
+      operator: airflow.providers.amazon.aws.operators.redshift_data.RedshiftDataOperator
+      aws_conn_id: aws_default
+      cluster_identifier: test-redshift-cluster
+      database: dev
+      db_user: adminuser
+      deferrable: false
+      outlets: []
+      params: {}
+      poll_interval: 10
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      return_sql_result: false
+      sql:
+      - "\n            CREATE TABLE IF NOT EXISTS fruit (\n            fruit_id INTEGER,\n\
+        \            name VARCHAR NOT NULL,\n            color VARCHAR NOT NULL\n\
+        \            );\n        "
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: create_table_redshift_data
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      with_event: false
+      dependencies:
+      - wait_cluster_available_after_resume
+    insert_data:
+      operator: airflow.providers.amazon.aws.operators.redshift_data.RedshiftDataOperator
+      aws_conn_id: aws_default
+      cluster_identifier: test-redshift-cluster
+      database: dev
+      db_user: adminuser
+      deferrable: false
+      outlets: []
+      params: {}
+      poll_interval: 10
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      return_sql_result: false
+      sql:
+      - "INSERT INTO fruit VALUES ( 1, 'Banana', 'Yellow');"
+      - "INSERT INTO fruit VALUES ( 2, 'Apple', 'Red');"
+      - "INSERT INTO fruit VALUES ( 3, 'Lemon', 'Yellow');"
+      - "INSERT INTO fruit VALUES ( 4, 'Grape', 'Purple');"
+      - "INSERT INTO fruit VALUES ( 5, 'Pear', 'Green');"
+      - "INSERT INTO fruit VALUES ( 6, 'Strawberry', 'Red');"
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: insert_data
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      with_event: false
+      dependencies:
+      - create_table_redshift_data
+    create_tmp_table_data_api:
+      operator: airflow.providers.amazon.aws.operators.redshift_data.RedshiftDataOperator
+      aws_conn_id: aws_default
+      cluster_identifier: test-redshift-cluster
+      database: dev
+      db_user: adminuser
+      deferrable: false
+      outlets: []
+      params: {}
+      poll_interval: 10
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      return_sql_result: false
+      session_keep_alive_seconds: 600
+      sql:
+      - "\n            CREATE TEMPORARY TABLE tmp_people (\n            id INTEGER,\n\
+        \            first_name VARCHAR(100),\n            age INTEGER\n         \
+        \   );\n        "
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: create_tmp_table_data_api
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      with_event: false
+      dependencies:
+      - wait_cluster_available_after_resume
+    insert_data_reuse_session:
+      operator: airflow.providers.amazon.aws.operators.redshift_data.RedshiftDataOperator
+      aws_conn_id: aws_default
+      deferrable: false
+      outlets: []
+      params: {}
+      poll_interval: 10
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      return_sql_result: false
+      session_id: "{{ task_instance.xcom_pull(task_ids='create_tmp_table_data_api',\
+        \ key='session_id') }}"
+      sql:
+      - "INSERT INTO tmp_people VALUES ( 1, 'Bob', 30);"
+      - "INSERT INTO tmp_people VALUES ( 2, 'Alice', 35);"
+      - "INSERT INTO tmp_people VALUES ( 3, 'Charlie', 40);"
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: insert_data_reuse_session
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      with_event: false
+      dependencies:
+      - create_tmp_table_data_api
+    delete_cluster:
+      operator: airflow.providers.amazon.aws.operators.redshift_cluster.RedshiftDeleteClusterOperator
+      aws_conn_id: aws_default
+      cluster_identifier: test-redshift-cluster
+      deferrable: false
+      max_attempts: 30
+      outlets: []
+      params: {}
+      poll_interval: 30
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      skip_final_cluster_snapshot: true
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: delete_cluster
+      trigger_rule: all_done
+      wait_for_completion: true
+      wait_for_downstream: false
+      dependencies:
+      - delete_cluster_snapshot
+    delete_cluster_snapshot:
+      operator: airflow.providers.amazon.aws.operators.redshift_cluster.RedshiftDeleteClusterSnapshotOperator
+      aws_conn_id: aws_default
+      cluster_identifier: test-redshift-cluster
+      outlets: []
+      params: {}
+      poll_interval: 10
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      snapshot_identifier: test-snapshot
+      start_date:
+        __type__: datetime.datetime
+        year: 2026
+        month: 1
+        day: 1
+      task_id: delete_cluster_snapshot
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      dependencies:
+      - insert_data_reuse_session
+      - insert_data
+  auto_register: true
+  catchup: true
+  dag_display_name: example_redshift
+  fail_fast: false
+  max_active_runs: 16
+  max_active_tasks: 16
+  max_consecutive_failed_dag_runs: 0
+  owner_links: {}
+  render_template_as_native_obj: false
+  start_date:
+    __type__: datetime.datetime
+    year: 2026
+    month: 1
+    day: 1
+  tags: []
+  template_undefined: jinja2.runtime.StrictUndefined

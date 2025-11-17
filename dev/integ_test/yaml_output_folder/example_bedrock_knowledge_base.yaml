@@ -1,0 +1,422 @@
+example_bedrock_knowledge_base:
+  dag_id: example_bedrock_knowledge_base
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    create_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: bedrock-kb-test
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_bucket
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    create_opensearch_policies:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_bedrock_retrieve_generate.create_opensearch_policies
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_opensearch_policies
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_bucket]
+      decorator: airflow.decorators.task
+      bedrock_role_arn: test
+      collection_name: bedrock-kb-test
+      policy_name_suffix: test
+    create_collection:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_bedrock_retrieve_generate.create_collection
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_collection
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_opensearch_policies]
+      decorator: airflow.decorators.task
+      collection_name: bedrock-kb-test
+    await_collection:
+      operator: airflow.providers.amazon.aws.sensors.opensearch_serverless.OpenSearchServerlessCollectionActiveSensor
+      aws_conn_id: aws_default
+      collection_name: bedrock-kb-test
+      deferrable: false
+      max_retries: 60
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 10
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: await_collection
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_collection]
+    invoke_claude_completions:
+      operator: airflow.providers.amazon.aws.operators.bedrock.BedrockInvokeModelOperator
+      aws_conn_id: aws_default
+      input_data:
+        max_tokens_to_sample: 4000
+        prompt: |2-
+
+
+          Human: What color is an orange?
+
+          Assistant:
+      model_id: anthropic.claude-v2
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: invoke_claude_completions
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [copy_data_to_s3]
+    get_collection_arn:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_bedrock_retrieve_generate.get_collection_arn
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: get_collection_arn
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_collection]
+      decorator: airflow.decorators.task
+      collection_id: +create_collection
+    create_knowledge_base:
+      operator: airflow.providers.amazon.aws.operators.bedrock.BedrockCreateKnowledgeBaseOperator
+      aws_conn_id: aws_default
+      create_knowledge_base_kwargs: {}
+      deferrable: false
+      embedding_model_arn: arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v1
+      indexing_error_max_attempts: 20
+      indexing_error_retry_delay: 5
+      name: bedrock-kb-test
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      role_arn: test
+      storage_config:
+        type: OPENSEARCH_SERVERLESS
+        opensearchServerlessConfiguration:
+          collectionArn: '{{ task_instance.xcom_pull(task_ids=''get_collection_arn'',
+            key=''return_value'') }}'
+          vectorIndexName: bedrock-kb-index-test
+          fieldMapping:
+            vectorField: vector
+            textField: text
+            metadataField: text-metadata
+      task_id: create_knowledge_base
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      wait_for_indexing: true
+      waiter_delay: 60
+      waiter_max_attempts: 20
+      dependencies: [get_collection_arn, invoke_claude_completions]
+    await_knowledge_base:
+      operator: airflow.providers.amazon.aws.sensors.bedrock.BedrockKnowledgeBaseActiveSensor
+      aws_conn_id: aws_default
+      deferrable: false
+      knowledge_base_id: '{{ task_instance.xcom_pull(task_ids=''create_knowledge_base'',
+        key=''return_value'') }}'
+      max_retries: 24
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 5
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: await_knowledge_base
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_knowledge_base]
+    create_data_source:
+      operator: airflow.providers.amazon.aws.operators.bedrock.BedrockCreateDataSourceOperator
+      aws_conn_id: aws_default
+      bucket_name: bedrock-kb-test
+      create_data_source_kwargs:
+        dataDeletionPolicy: RETAIN
+      knowledge_base_id: '{{ task_instance.xcom_pull(task_ids=''create_knowledge_base'',
+        key=''return_value'') }}'
+      name: bedrock-kb-ds-test
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_data_source
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [await_knowledge_base, create_knowledge_base]
+    ingest_data:
+      operator: airflow.providers.amazon.aws.operators.bedrock.BedrockIngestDataOperator
+      aws_conn_id: aws_default
+      data_source_id: '{{ task_instance.xcom_pull(task_ids=''create_data_source'',
+        key=''return_value'') }}'
+      deferrable: false
+      ingest_data_kwargs: {}
+      knowledge_base_id: '{{ task_instance.xcom_pull(task_ids=''create_knowledge_base'',
+        key=''return_value'') }}'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: ingest_data
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      waiter_delay: 60
+      waiter_max_attempts: 10
+      dependencies: [create_knowledge_base, create_data_source]
+    await_ingest:
+      operator: airflow.providers.amazon.aws.sensors.bedrock.BedrockIngestionJobSensor
+      aws_conn_id: aws_default
+      data_source_id: '{{ task_instance.xcom_pull(task_ids=''create_data_source'',
+        key=''return_value'') }}'
+      deferrable: false
+      ingestion_job_id: '{{ task_instance.xcom_pull(task_ids=''ingest_data'', key=''return_value'')
+        }}'
+      knowledge_base_id: '{{ task_instance.xcom_pull(task_ids=''create_knowledge_base'',
+        key=''return_value'') }}'
+      max_retries: 10
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 60
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: await_ingest
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [ingest_data, create_knowledge_base, create_data_source]
+    knowledge_base_rag:
+      operator: airflow.providers.amazon.aws.operators.bedrock.BedrockRaGOperator
+      aws_conn_id: aws_default
+      input: Who was the CEO of Amazon on 2022?
+      knowledge_base_id: '{{ task_instance.xcom_pull(task_ids=''create_knowledge_base'',
+        key=''return_value'') }}'
+      model_arn: arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-v2
+      outlets: []
+      params: {}
+      priority_weight: 1
+      rag_kwargs: {}
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      source_type: KNOWLEDGE_BASE
+      task_id: knowledge_base_rag
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_knowledge_base, await_ingest]
+    retrieve:
+      operator: airflow.providers.amazon.aws.operators.bedrock.BedrockRetrieveOperator
+      aws_conn_id: aws_default
+      knowledge_base_id: '{{ task_instance.xcom_pull(task_ids=''create_knowledge_base'',
+        key=''return_value'') }}'
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retrieval_query: Who was the CEO of Amazon in 1997?
+      retrieve_kwargs: {}
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: retrieve
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [end_workflow, create_knowledge_base]
+    delete_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: bedrock-kb-test
+      force_delete: true
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_bucket
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_collection]
+    create_vector_index:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_bedrock_retrieve_generate.create_vector_index
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_vector_index
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [await_collection, create_collection]
+      decorator: airflow.decorators.task
+      index_name: bedrock-kb-index-test
+      collection_id: +create_collection
+      region: us-east-1
+    copy_data_to_s3:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_bedrock_retrieve_generate.copy_data_to_s3
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: copy_data_to_s3
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_vector_index]
+      decorator: airflow.decorators.task
+      bucket: bedrock-kb-test
+    run_or_skip:
+      operator: airflow.providers.standard.decorators.branch_python._BranchPythonDecoratedOperator
+      op_args: []
+      op_kwargs: {}
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_bedrock_retrieve_generate.run_or_skip
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: run_or_skip
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [knowledge_base_rag]
+    external_sources_rag:
+      operator: airflow.providers.amazon.aws.operators.bedrock.BedrockRaGOperator
+      aws_conn_id: aws_default
+      input: Who was the CEO of Amazon in 2022?
+      model_arn: arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0
+      outlets: []
+      params: {}
+      priority_weight: 1
+      rag_kwargs: {}
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      source_type: EXTERNAL_SOURCES
+      sources: [{sourceType: S3, s3Location: {uri: 's3://bedrock-kb-test/AMZN-2022-Shareholder-Letter.pdf'}}]
+      task_id: external_sources_rag
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [run_or_skip]
+    end_workflow:
+      operator: airflow.providers.standard.operators.empty.EmptyOperator
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: end_workflow
+      wait_for_downstream: false
+      dependencies: [external_sources_rag]
+    delete_data_source:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_bedrock_retrieve_generate.delete_data_source
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_data_source
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [create_knowledge_base, create_data_source, retrieve]
+      decorator: airflow.decorators.task
+      knowledge_base_id: +create_knowledge_base
+      data_source_id: +create_data_source
+    delete_knowledge_base:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_bedrock_retrieve_generate.delete_knowledge_base
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_knowledge_base
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [create_knowledge_base, delete_data_source]
+      decorator: airflow.decorators.task
+      knowledge_base_id: +create_knowledge_base
+    delete_vector_index:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_bedrock_retrieve_generate.delete_vector_index
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_vector_index
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_knowledge_base, create_collection]
+      decorator: airflow.decorators.task
+      index_name: bedrock-kb-index-test
+      collection_id: +create_collection
+    delete_opensearch_policies:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_bedrock_retrieve_generate.delete_opensearch_policies
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_opensearch_policies
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_vector_index]
+      decorator: airflow.decorators.task
+      collection_name: bedrock-kb-test
+    delete_collection:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_bedrock_retrieve_generate.delete_collection
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_collection
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [create_collection, delete_opensearch_policies]
+      decorator: airflow.decorators.task
+      collection_id: +create_collection

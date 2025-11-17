@@ -1,0 +1,204 @@
+example_quicksight:
+  dag_id: example_quicksight
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    get_aws_account_id:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_quicksight.get_aws_account_id
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: get_aws_account_id
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+      decorator: airflow.decorators.task
+    create_s3_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-quicksight-bucket
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_s3_bucket
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [get_aws_account_id]
+    upload_manifest_file:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
+      aws_conn_id: aws_default
+      data: '{"fileLocations": [{"URIs": ["s3://test-quicksight-bucket/sample_data.csv"]}]}'
+      encrypt: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replace: true
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: test-quicksight-bucket
+      s3_key: test-manifest.json
+      task_id: upload_manifest_file
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_s3_bucket]
+    upload_sample_data:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
+      aws_conn_id: aws_default
+      data: |
+        'Airflow','2015'
+            'OpenOffice','2012'
+            'Subversion','2000'
+            'NiFi','2006'
+      encrypt: false
+      outlets: []
+      params: {}
+      priority_weight: 1
+      replace: true
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      s3_bucket: test-quicksight-bucket
+      s3_key: sample_data.csv
+      task_id: upload_sample_data
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [upload_manifest_file]
+    create_quicksight_data_source:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_quicksight.create_quicksight_data_source
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_quicksight_data_source
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [get_aws_account_id, upload_sample_data]
+      decorator: airflow.decorators.task
+      aws_account_id: +get_aws_account_id
+      datasource_name: test-data-source
+      bucket: test-quicksight-bucket
+      manifest_key: test-manifest.json
+    create_quicksight_dataset:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_quicksight.create_quicksight_dataset
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_quicksight_dataset
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_quicksight_data_source, get_aws_account_id]
+      decorator: airflow.decorators.task
+      aws_account_id: +get_aws_account_id
+      dataset_name: test-data-set
+      data_source_arn: +create_quicksight_data_source
+    create_ingestion:
+      operator: airflow.providers.amazon.aws.operators.quicksight.QuickSightCreateIngestionOperator
+      aws_conn_id: aws_default
+      check_interval: 30
+      data_set_id: test-data-set
+      ingestion_id: test-ingestion
+      ingestion_type: FULL_REFRESH
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: create_ingestion
+      trigger_rule: all_success
+      wait_for_completion: false
+      wait_for_downstream: false
+      dependencies: [create_quicksight_dataset]
+    await_job:
+      operator: airflow.providers.amazon.aws.sensors.quicksight.QuickSightSensor
+      aws_conn_id: aws_default
+      data_set_id: test-data-set
+      ingestion_id: test-ingestion
+      mode: poke
+      outlets: []
+      params: {}
+      poke_interval: 10
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: await_job
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [create_ingestion]
+    delete_s3_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
+      aws_conn_id: aws_default
+      bucket_name: test-quicksight-bucket
+      force_delete: true
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_s3_bucket
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_ingestion]
+    delete_dataset:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_quicksight.delete_dataset
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_dataset
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [await_job, get_aws_account_id]
+      decorator: airflow.decorators.task
+      aws_account_id: +get_aws_account_id
+      dataset_name: test-data-set
+    delete_quicksight_data_source:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_quicksight.delete_quicksight_data_source
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_quicksight_data_source
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [delete_dataset, get_aws_account_id]
+      decorator: airflow.decorators.task
+      aws_account_id: +get_aws_account_id
+      datasource_name: test-data-source
+    delete_ingestion:
+      outlets: []
+      params: {}
+      priority_weight: 1
+      python_callable: airflow_quicksight.delete_ingestion
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: delete_ingestion
+      trigger_rule: all_done
+      wait_for_downstream: false
+      dependencies: [get_aws_account_id, delete_quicksight_data_source]
+      decorator: airflow.decorators.task
+      aws_account_id: +get_aws_account_id
+      dataset_name: test-data-set
+      ingestion_name: test-ingestion

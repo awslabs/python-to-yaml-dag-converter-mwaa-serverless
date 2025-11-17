@@ -1,0 +1,47 @@
+check_aws_cli_functionality:
+  dag_id: check_aws_cli_functionality
+  params: {}
+  default_args:
+    start_date: '2026-01-01'
+  schedule: '@once'
+  tasks:
+    display_cli_version:
+      operator: airflow.providers.standard.operators.bash.BashOperator
+      bash_command: aws --version
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: display_cli_version
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    check_json_output:
+      operator: airflow.providers.standard.operators.bash.BashOperator
+      bash_command: aws mwaa list-environments --region $AWS_REGION --output json
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: check_json_output
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [display_cli_version]
+    check_yaml_output:
+      operator: airflow.providers.standard.operators.bash.BashOperator
+      bash_command: aws mwaa list-environments --region $AWS_REGION --output yaml
+      outlets: []
+      params: {}
+      priority_weight: 1
+      retries: 0
+      retry_delay: 300.0
+      retry_exponential_backoff: false
+      task_id: check_yaml_output
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: [check_json_output]
+  dagrun_timeout_sec: 300.0
