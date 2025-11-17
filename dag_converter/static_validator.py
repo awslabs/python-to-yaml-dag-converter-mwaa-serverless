@@ -1,7 +1,7 @@
 import ast
 from pathlib import Path
 
-from dag_converter.conversion.exceptions import InvalidDagParameter, InvalidOperatorError
+from dag_converter.conversion.exceptions import InvalidOperatorError
 from dag_converter.schema_parser import ArgumentValidator
 
 
@@ -16,6 +16,7 @@ def validate_file(file_path: Path, validator: ArgumentValidator):
                 break
         if not valid:
             raise InvalidOperatorError(f"Operator {operator} is not supported")
+
 
 def extract_dag_params(file_path: Path) -> list[str]:
     """Extract DAG constructor parameters from the AST"""

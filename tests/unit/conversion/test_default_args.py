@@ -1,5 +1,4 @@
 import unittest
-from datetime import datetime
 from unittest.mock import Mock
 
 from dag_converter.conversion.default_args import convert_default_args
@@ -41,7 +40,7 @@ class TestConvertDefaultArgs(unittest.TestCase):
     def test_mixed_args(self):
         """Test conversion with mixed valid args"""
         self.mock_validator.validate_field.return_value = True
-        args = { "retries": 3, "retry_delay": 300}
+        args = {"retries": 3, "retry_delay": 300}
 
         result = convert_default_args(args, self.mock_validator)
 
