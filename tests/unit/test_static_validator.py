@@ -7,7 +7,6 @@ from pathlib import Path
 from unittest.mock import Mock
 
 from dag_converter.conversion.exceptions import (
-    InvalidDagParameter,
     InvalidOperatorError,
 )
 from dag_converter.static_validator import (

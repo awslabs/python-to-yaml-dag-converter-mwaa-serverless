@@ -1,7 +1,6 @@
 import importlib
 import inspect
 from pathlib import Path
-from typing import Any
 
 from airflow.models.dag import DAG
 from airflow.models.operator import Operator
@@ -146,4 +145,3 @@ def get_operator_parameters(operator_class_or_string: type[Operator] | str) -> l
 
     # Remove duplicates while preserving order
     return list(dict.fromkeys(all_params))
-

@@ -20,7 +20,9 @@ def convert(
     output: Annotated[Path, typer.Option(help="Path to output converted YAML Dag(s) to")] = Path("output_yaml/"),
     bucket: Annotated[str, typer.Option(help="S3 bucket to upload converted Dags to. Uses local AWS credentials")] = "",
     validate: Annotated[bool, typer.Option(help="Validate the output YAML using DagFactory")] = True,
-    debug: Annotated[bool, typer.Option(help="Enable logging DagBag objects to .initial_task_attributes before and after conversion")] = False,
+    debug: Annotated[
+        bool, typer.Option(help="Enable logging DagBag objects to .initial_task_attributes before and after conversion")
+    ] = False,  # noqa 501
 ):
     """
     Loads Python Dags from input and converts them to YAML Dags.

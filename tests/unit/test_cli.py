@@ -7,7 +7,7 @@ from typer.testing import CliRunner
 
 from dag_converter.cli import app
 
-runner = CliRunner()
+runner = CliRunner(env={'NO_COLOR': '1', "TERM": 'dumb'})
 
 
 class TestCli(unittest.TestCase):
@@ -31,12 +31,12 @@ class TestCli(unittest.TestCase):
         """Test that the convert command shows help information."""
         result = runner.invoke(app, ["convert", "--help"])
         self.assertEqual(result.exit_code, 0)
-        self.assertIn("Loads Python Dags from input and converts them to YAML Dags", result.stdout)
-        self.assertIn("INPUT_PATH", result.stdout)
-        self.assertIn("--output", result.stdout)
-        self.assertIn("--bucket", result.stdout)
-        self.assertIn("--validate", result.stdout)
-        self.assertIn("--debug", result.stdout)
+        self.assertIn("Loads Python Dags from input and converts them to YAML Dags", result.output)
+        self.assertIn("INPUT_PATH", result.output)
+        self.assertIn("--output", result.output)
+        self.assertIn("--bucket", result.output)
+        self.assertIn("--validate", result.output)
+        self.assertIn("--debug", result.output)
 
     @patch("dag_converter.conversion_manager.ConversionManager")
     def test_convert_with_minimal_args(self, mock_conversion_manager):

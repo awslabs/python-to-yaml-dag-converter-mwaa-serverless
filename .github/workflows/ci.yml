@@ -1,0 +1,62 @@
+name: Continuous Integration Tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  release:
+    types: ["published"]
+
+jobs:
+  Unit-Tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: "0.8.19"
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+
+    - name: Install hatch
+      run: |
+        python -m pip install --upgrade pip
+        pip install hatch
+
+    - name: Ruff Lint
+      run: hatch fmt
+
+    - name: Run tests
+      run: hatch test
+
+  Integration-Tests:
+    runs-on: ubuntu-latest
+    needs: Unit-Tests
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: "0.8.19"
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+
+    - name: Install hatch
+      run: |
+        python -m pip install --upgrade pip
+        pip install hatch
+
+    - name: Ruff Lint
+      run: hatch fmt
+
+    - name: Run tests
+      run: hatch run dev:integ-test

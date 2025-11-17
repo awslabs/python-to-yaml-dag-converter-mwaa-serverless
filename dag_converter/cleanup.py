@@ -1,8 +1,8 @@
 """Module for cleaning up data structures before serialization."""
 
-from enum import Enum
 import re
 from datetime import date, datetime, time, timedelta
+from enum import Enum
 from typing import Any
 
 from airflow.sdk.definitions.param import ParamsDict
@@ -51,10 +51,7 @@ def get_cleanup_dag(obj: Any) -> Any:
         return obj.dump()
 
     if isinstance(obj, Enum):
-        return {
-            "__type__": obj.__module__ + "." + obj.__class__.__name__,
-            "__args__": [obj.value]
-        }
+        return {"__type__": obj.__module__ + "." + obj.__class__.__name__, "__args__": [obj.value]}
 
     if isinstance(obj, dict):
         # Handle encoded values
@@ -79,9 +76,9 @@ def get_cleanup_dag(obj: Any) -> Any:
             "hour": obj.hour,
             "minute": obj.minute,
             "second": obj.second,
-            "microsecond": obj.microsecond
+            "microsecond": obj.microsecond,
         }
-        return { key: value for key, value in custom_object.items() if value }
+        return {key: value for key, value in custom_object.items() if value}
 
     if isinstance(obj, date):
         return obj.isoformat()
@@ -90,10 +87,7 @@ def get_cleanup_dag(obj: Any) -> Any:
         return obj.strftime("%H:%M:%S")
 
     if isinstance(obj, timedelta):
-        return {
-            "__type__": "datetime.timedelta",
-            "seconds": obj.total_seconds()
-        }
+        return {"__type__": "datetime.timedelta", "seconds": obj.total_seconds()}
 
     if callable(obj) and hasattr(obj, "__name__"):
         function_name = obj.__name__
@@ -114,10 +108,7 @@ def get_cleanup_dag(obj: Any) -> Any:
         return f"{input_file_name}.{function_name}"
 
     if hasattr(obj, "__dict__"):  # Handle custom objects
-        return {
-            "__type__": obj.__module__ + "." + obj.__class__.__name__,
-            **get_cleanup_dag(obj.__dict__)
-        }
+        return {"__type__": obj.__module__ + "." + obj.__class__.__name__, **get_cleanup_dag(obj.__dict__)}
 
     return str(obj)
 

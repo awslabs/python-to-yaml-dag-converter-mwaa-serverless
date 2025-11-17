@@ -38,7 +38,7 @@ def run_tests(input_path, output_folder):
             return
     else:
         # Find all Python files in folder
-        python_files = [file for file in input_path.rglob("*.py") if 'dependencies' not in str(file)]
+        python_files = [file for file in input_path.rglob("*.py") if "dependencies" not in str(file)]
         if not python_files:
             print(f"No Python files found in {input_path}")
             return
