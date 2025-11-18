@@ -43,7 +43,7 @@ Review the converted Dags in the `output_yaml` folder in the current directory
 * Dynamic task mapping conversion is not supported
 
 ## Examples
-* See supported [examples](https://github.com/awslabs/python-to-yaml-dag-converter-mwaa-serverless/blob/main/dev/integ_test/python_test_folder/supported)
+* See supported [examples](https://github.com/aws-samples/amazon-mwaa-examples/tree/main/serverless/examples)
 * Try one out
 ```
 dag-converter convert airflow_s3.py
