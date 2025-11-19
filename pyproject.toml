@@ -24,7 +24,7 @@ dependencies = [
     "dag-factory==1.0.0",
     "rich>=13.7.1,<15.0.0",
     # Fastapi dependency issue https://github.com/apache/airflow/discussions/57769
-    "fastapi[standard]<0.118",
+    "fastapi[standard]==0.121.2",
 ]
 
 [project.scripts]
