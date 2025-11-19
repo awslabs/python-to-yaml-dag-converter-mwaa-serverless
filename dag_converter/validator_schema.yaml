@@ -162,7 +162,6 @@ task:
     "airflow.providers.amazon.aws.operators.s3.S3CopyObjectOperator",
     "airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator",
     "airflow.providers.amazon.aws.operators.s3.S3DeleteObjectsOperator",
-    "airflow.providers.amazon.aws.operators.s3.S3FileTransformOperator",
     "airflow.providers.amazon.aws.operators.s3.S3ListOperator",
     "airflow.providers.amazon.aws.operators.s3.S3ListPrefixesOperator",
     "airflow.providers.amazon.aws.operators.appflow.AppflowBaseOperator",
