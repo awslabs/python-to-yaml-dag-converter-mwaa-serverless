@@ -28,7 +28,6 @@ from airflow.providers.amazon.aws.operators.s3 import (
     S3DeleteBucketOperator,
     S3DeleteBucketTaggingOperator,
     S3DeleteObjectsOperator,
-    S3FileTransformOperator,
     S3GetBucketTaggingOperator,
     S3ListOperator,
     S3ListPrefixesOperator,
@@ -239,17 +238,6 @@ with DAG(
     )
     # [END howto_operator_s3_copy_object]
 
-    # [START howto_operator_s3_file_transform]
-    file_transform = S3FileTransformOperator(
-        task_id="file_transform",
-        source_s3_key=f"s3://{bucket_name}/{key}",
-        dest_s3_key=f"s3://{bucket_name_2}/{key_2}",
-        # Use `cp` command as transform script as an example
-        transform_script="cp",
-        replace=True,
-    )
-    # [END howto_operator_s3_file_transform]
-
     # [START howto_sensor_s3_keys_unchanged]
     sensor_keys_unchanged = S3KeysUnchangedSensor(
         task_id="sensor_keys_unchanged",
@@ -304,7 +292,6 @@ with DAG(
             sensor_key_with_regex_deferrable,
         ],
         copy_object,
-        file_transform,
         sensor_keys_unchanged,
         # TEST TEARDOWN
         delete_objects,
