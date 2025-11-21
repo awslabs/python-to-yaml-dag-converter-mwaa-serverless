@@ -76,7 +76,9 @@ class TestGetConvertedFormat(unittest.TestCase):
     @patch("dag_converter.conversion.converter.convert_schedule") 
     @patch("dag_converter.conversion.converter.convert_default_args")
     @patch("dag_converter.conversion.converter.get_dag_default_values")
-    def test_default_values_filtered_out(self, mock_get_defaults, mock_convert_default, mock_convert_schedule, mock_convert_tasks):
+    def test_default_values_filtered_out(
+        self, mock_get_defaults, mock_convert_default, mock_convert_schedule, mock_convert_tasks
+    ):
         """Test that default values are excluded from output"""
         
         # Setup mocks
@@ -112,7 +114,9 @@ class TestGetConvertedFormat(unittest.TestCase):
     @patch("dag_converter.conversion.converter.convert_schedule") 
     @patch("dag_converter.conversion.converter.convert_default_args")
     @patch("dag_converter.conversion.converter.get_dag_default_values")
-    def test_non_default_values_included(self, mock_get_defaults, mock_convert_default, mock_convert_schedule, mock_convert_tasks):
+    def test_non_default_values_included(
+        self, mock_get_defaults, mock_convert_default, mock_convert_schedule, mock_convert_tasks
+    ):
         """Test that non-default values like fail_fast=True are included in output"""
         
         # Setup mocks
