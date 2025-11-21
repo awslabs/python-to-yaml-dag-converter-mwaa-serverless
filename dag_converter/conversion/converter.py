@@ -1,3 +1,4 @@
+import inspect
 from pathlib import Path
 
 from airflow.models.dag import DAG
@@ -7,6 +8,33 @@ from dag_converter.conversion.schedule import convert_schedule
 from dag_converter.conversion.tasks import convert_tasks
 from dag_converter.schema_parser import ArgumentValidator
 from dag_converter.taskflow_parser import TaskFlowAnalyzer
+
+
+def get_dag_default_values() -> dict:
+    """
+    Returns a dictionary of default values for DAG class.
+    
+    Returns:
+        dict: Dictionary of parameter names and their default values
+    """
+    defaults = {}
+    
+    try:
+        sig = inspect.signature(DAG.__init__)
+        for name, param in sig.parameters.items():
+            if name not in ["self", "args", "kwargs"] and param.default is not inspect.Parameter.empty:
+                defaults[name] = param.default
+    except Exception:
+        pass
+    
+    return defaults
+
+
+def is_dag_default_value(key: str, value, dag_defaults: dict) -> bool:
+    """
+    Check if a DAG-level value is a default that should be excluded from output.
+    """
+    return key in dag_defaults and value == dag_defaults[key]
 
 
 def get_converted_format(
@@ -39,13 +67,16 @@ def get_converted_format(
         }
     }
 
+    # Get DAG default values to filter them out
+    dag_defaults = get_dag_default_values()
+
     # Filter out extraneous Dag fields
     for key in dir(dag_object):
         value = getattr(dag_object, key, None)
         # Only keep non-internal fields and valid fields
         if key not in converted_dag[dag_id] and not key.startswith("_") and validator.validate_field("dag", key, value):
-            # Skip keywords that were not set by user
-            if value is None:
+            # Skip keywords that were not set by user (None values or default values)
+            if value is None or is_dag_default_value(key, value, dag_defaults):
                 pass
             else:
                 converted_dag[dag_id][key] = value
