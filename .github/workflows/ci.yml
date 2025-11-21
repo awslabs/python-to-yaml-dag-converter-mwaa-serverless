@@ -32,7 +32,7 @@ jobs:
       run: hatch fmt
 
     - name: Run tests
-      run: hatch test
+      run: hatch run tests:test 
 
   Integration-Tests:
     runs-on: ubuntu-latest

@@ -99,6 +99,9 @@ def run_tests(input_path, output_folder):
 
     print(f"\nOutput files saved to: {output_folder}")
 
+    if failed:
+        raise Exception(f"Conversion failed for { len(failed) } files")
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
