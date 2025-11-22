@@ -39,12 +39,3 @@ aws_athena_queries:
         output_location: s3://my-athena-results/
         sleep_time: 30
         weight_rule: downstream
-  catchup: false
-  dag_display_name: aws_athena_queries
-  owner_links: {}
-  start_date:
-    __type__: datetime.datetime
-    year: 2026
-    month: 1
-    day: 1
-  tags: []

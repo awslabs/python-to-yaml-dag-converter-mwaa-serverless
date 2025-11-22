@@ -34,7 +34,17 @@ def is_dag_default_value(key: str, value, dag_defaults: dict) -> bool:
     """
     Check if a DAG-level value is a default that should be excluded from output.
     """
-    return key in dag_defaults and value == dag_defaults[key]
+    if key not in dag_defaults:
+        return False
+    
+    default_value = dag_defaults[key]
+    
+    # Filter out values when default is NOTHING (not explicitly set)
+    # Check if it's the _Nothing.NOTHING enum value
+    if hasattr(default_value, 'name') and default_value.name == 'NOTHING':
+        return True
+    
+    return value == default_value
 
 
 def get_converted_format(

@@ -424,14 +424,5 @@ example_redshift:
       wait_for_completion: true
       wait_for_downstream: false
       dependencies:
-      - insert_data_reuse_session
       - insert_data
-  catchup: false
-  dag_display_name: example_redshift
-  owner_links: {}
-  start_date:
-    __type__: datetime.datetime
-    year: 2026
-    month: 1
-    day: 1
-  tags: []
+      - insert_data_reuse_session

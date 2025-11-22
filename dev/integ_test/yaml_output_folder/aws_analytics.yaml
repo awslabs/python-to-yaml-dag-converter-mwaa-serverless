@@ -119,13 +119,4 @@ aws_analytics:
       wildcard_match: false
       dependencies:
       - list_analytics-reports
-  catchup: false
-  dag_display_name: aws_analytics
   description: Dynamically generated AWS DAG for analytics
-  owner_links: {}
-  start_date:
-    __type__: datetime.datetime
-    year: 2026
-    month: 1
-    day: 1
-  tags: []

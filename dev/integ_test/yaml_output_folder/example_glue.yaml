@@ -275,12 +275,3 @@ example_glue:
       wait_for_downstream: false
       dependencies:
       - wait_for_job
-  catchup: false
-  dag_display_name: example_glue
-  owner_links: {}
-  start_date:
-    __type__: datetime.datetime
-    year: 2026
-    month: 7
-    day: 15
-  tags: []

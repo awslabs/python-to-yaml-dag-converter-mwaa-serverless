@@ -161,12 +161,3 @@ example_rds_instance:
       waiter_max_attempts: 60
       dependencies:
       - start_db_instance
-  catchup: false
-  dag_display_name: example_rds_instance
-  owner_links: {}
-  start_date:
-    __type__: datetime.datetime
-    year: 2026
-    month: 1
-    day: 1
-  tags: []

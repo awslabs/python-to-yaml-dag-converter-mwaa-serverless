@@ -251,12 +251,3 @@ example_eks_with_fargate_profile:
       wait_for_downstream: false
       dependencies:
       - delete_eks_cluster
-  catchup: false
-  dag_display_name: example_eks_with_fargate_profile
-  owner_links: {}
-  start_date:
-    __type__: datetime.datetime
-    year: 2026
-    month: 1
-    day: 1
-  tags: []
