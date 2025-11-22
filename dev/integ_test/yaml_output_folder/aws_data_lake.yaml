@@ -134,8 +134,8 @@ aws_data_lake:
       trigger_rule: all_success
       wait_for_downstream: false
       dependencies:
-      - create_file_data-lake-raw_sample_data2.csv
       - create_file_data-lake-raw_sample_data1.csv
+      - create_file_data-lake-raw_sample_data2.csv
     list_data-lake-processed:
       operator: airflow.providers.amazon.aws.operators.s3.S3ListOperator
       apply_wildcard: false
@@ -224,20 +224,13 @@ aws_data_lake:
       wildcard_match: false
       dependencies:
       - list_data-lake-raw
-  auto_register: true
-  catchup: true
+  catchup: false
   dag_display_name: aws_data_lake
   description: Dynamically generated AWS DAG for data_lake
-  fail_fast: false
-  max_active_runs: 16
-  max_active_tasks: 16
-  max_consecutive_failed_dag_runs: 0
   owner_links: {}
-  render_template_as_native_obj: false
   start_date:
     __type__: datetime.datetime
     year: 2026
     month: 1
     day: 1
   tags: []
-  template_undefined: jinja2.runtime.StrictUndefined

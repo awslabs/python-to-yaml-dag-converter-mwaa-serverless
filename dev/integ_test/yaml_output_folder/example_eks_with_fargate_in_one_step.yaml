@@ -136,19 +136,12 @@ example_eks_with_fargate_in_one_step:
       wait_for_downstream: false
       dependencies:
       - delete_fargate_profile_and_cluster
-  auto_register: true
-  catchup: true
+  catchup: false
   dag_display_name: example_eks_with_fargate_in_one_step
-  fail_fast: false
-  max_active_runs: 16
-  max_active_tasks: 16
-  max_consecutive_failed_dag_runs: 0
   owner_links: {}
-  render_template_as_native_obj: false
   start_date:
     __type__: datetime.datetime
     year: 2026
     month: 1
     day: 1
   tags: []
-  template_undefined: jinja2.runtime.StrictUndefined
