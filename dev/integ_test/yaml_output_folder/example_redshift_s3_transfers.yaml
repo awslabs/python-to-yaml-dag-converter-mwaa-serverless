@@ -550,9 +550,9 @@ example_redshift_s3_transfers:
       wait_for_completion: true
       wait_for_downstream: false
       dependencies:
-      - transfer_s3_to_redshift_tmp_table
-      - drop_table
       - check_if_tmp_table_key_exists
+      - drop_table
+      - transfer_s3_to_redshift_tmp_table
     delete_bucket:
       operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
       aws_conn_id: aws_default

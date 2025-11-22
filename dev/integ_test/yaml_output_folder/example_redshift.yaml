@@ -424,8 +424,8 @@ example_redshift:
       wait_for_completion: true
       wait_for_downstream: false
       dependencies:
-      - insert_data_reuse_session
       - insert_data
+      - insert_data_reuse_session
   catchup: false
   dag_display_name: example_redshift
   owner_links: {}

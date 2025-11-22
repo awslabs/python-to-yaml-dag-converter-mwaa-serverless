@@ -134,8 +134,8 @@ aws_data_lake:
       trigger_rule: all_success
       wait_for_downstream: false
       dependencies:
-      - create_file_data-lake-raw_sample_data2.csv
       - create_file_data-lake-raw_sample_data1.csv
+      - create_file_data-lake-raw_sample_data2.csv
     list_data-lake-processed:
       operator: airflow.providers.amazon.aws.operators.s3.S3ListOperator
       apply_wildcard: false

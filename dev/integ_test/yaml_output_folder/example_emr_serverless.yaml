@@ -33,7 +33,7 @@ example_emr_serverless:
     create_emr_serverless_task:
       operator: airflow.providers.amazon.aws.operators.emr.EmrServerlessCreateApplicationOperator
       aws_conn_id: aws_default
-      client_request_token: 4ef2081f-c70c-43a6-8269-bcf7c625d6fb
+      client_request_token: 2e1e11a5-2273-4704-896e-0946669cf2c8
       config:
         name: new_application
       deferrable: false
@@ -92,7 +92,7 @@ example_emr_serverless:
       application_id: "{{ task_instance.xcom_pull(task_ids='create_emr_serverless_task',\
         \ key='return_value') }}"
       aws_conn_id: aws_default
-      client_request_token: f1e9be86-6487-4fce-80bd-cc43e200e320
+      client_request_token: 4fcdce11-a324-45ca-8a4b-abd76b1d94db
       config: {}
       configuration_overrides:
         monitoringConfiguration:
@@ -218,8 +218,8 @@ example_emr_serverless:
       waiter_delay: 60
       waiter_max_attempts: 25
       dependencies:
-      - stop_application
       - create_emr_serverless_task
+      - stop_application
     delete_s3_bucket:
       operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
       aws_conn_id: aws_default
