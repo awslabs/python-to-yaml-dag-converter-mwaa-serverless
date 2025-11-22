@@ -33,3 +33,12 @@ simple_empty_dag:
       trigger_rule: all_success
       wait_for_downstream: false
       dependencies: []
+  catchup: false
+  dag_display_name: simple_empty_dag
+  owner_links: {}
+  start_date:
+    __type__: datetime.datetime
+    year: 2026
+    month: 1
+    day: 1
+  tags: []

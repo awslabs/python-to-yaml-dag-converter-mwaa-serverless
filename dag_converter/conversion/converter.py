@@ -39,11 +39,11 @@ def is_dag_default_value(key: str, value, dag_defaults: dict) -> bool:
     
     default_value = dag_defaults[key]
     
-    # Filter out values when default is NOTHING (not explicitly set)
-    # Check if it's the _Nothing.NOTHING enum value
-    if hasattr(default_value, 'name') and default_value.name == 'NOTHING':
+    # Only filter out values that are still NOTHING (truly not set)
+    if hasattr(value, 'name') and value.name == 'NOTHING':
         return True
     
+    # For regular defaults, filter if values match
     return value == default_value
 
 

@@ -33,7 +33,7 @@ example_emr_serverless:
     create_emr_serverless_task:
       operator: airflow.providers.amazon.aws.operators.emr.EmrServerlessCreateApplicationOperator
       aws_conn_id: aws_default
-      client_request_token: 742b10f6-6a7b-4af9-ba95-2d8a612857a0
+      client_request_token: 4ef2081f-c70c-43a6-8269-bcf7c625d6fb
       config:
         name: new_application
       deferrable: false
@@ -92,7 +92,7 @@ example_emr_serverless:
       application_id: "{{ task_instance.xcom_pull(task_ids='create_emr_serverless_task',\
         \ key='return_value') }}"
       aws_conn_id: aws_default
-      client_request_token: 40eb8288-ecc9-4b42-942f-82857d8ed172
+      client_request_token: f1e9be86-6487-4fce-80bd-cc43e200e320
       config: {}
       configuration_overrides:
         monitoringConfiguration:
@@ -128,8 +128,8 @@ example_emr_serverless:
       waiter_delay: 60
       waiter_max_attempts: 25
       dependencies:
-      - wait_for_app_creation
       - create_emr_serverless_task
+      - wait_for_app_creation
     wait_for_job:
       operator: airflow.providers.amazon.aws.sensors.emr.EmrServerlessJobSensor
       application_id: "{{ task_instance.xcom_pull(task_ids='create_emr_serverless_task',\
@@ -153,15 +153,15 @@ example_emr_serverless:
         month: 1
         day: 1
       target_states:
-      - SUCCESS
       - RUNNING
+      - SUCCESS
       task_id: wait_for_job
       timeout: 604800.0
       trigger_rule: all_success
       wait_for_downstream: false
       dependencies:
-      - start_emr_serverless_job
       - create_emr_serverless_task
+      - start_emr_serverless_job
     stop_application:
       operator: airflow.providers.amazon.aws.operators.emr.EmrServerlessStopApplicationOperator
       application_id: "{{ task_instance.xcom_pull(task_ids='create_emr_serverless_task',\
@@ -189,8 +189,8 @@ example_emr_serverless:
       waiter_delay: 60
       waiter_max_attempts: 25
       dependencies:
-      - wait_for_job
       - create_emr_serverless_task
+      - wait_for_job
     delete_application:
       operator: airflow.providers.amazon.aws.operators.emr.EmrServerlessDeleteApplicationOperator
       application_id: "{{ task_instance.xcom_pull(task_ids='create_emr_serverless_task',\
@@ -243,3 +243,12 @@ example_emr_serverless:
       wait_for_downstream: false
       dependencies:
       - delete_application
+  catchup: false
+  dag_display_name: example_emr_serverless
+  owner_links: {}
+  start_date:
+    __type__: datetime.datetime
+    year: 2026
+    month: 1
+    day: 1
+  tags: []

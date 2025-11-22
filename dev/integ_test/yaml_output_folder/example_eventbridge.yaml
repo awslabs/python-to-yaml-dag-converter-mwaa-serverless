@@ -103,3 +103,12 @@ example_eventbridge:
       wait_for_downstream: false
       dependencies:
       - enable_rule_task
+  catchup: false
+  dag_display_name: example_eventbridge
+  owner_links: {}
+  start_date:
+    __type__: datetime.datetime
+    year: 2026
+    month: 1
+    day: 1
+  tags: []

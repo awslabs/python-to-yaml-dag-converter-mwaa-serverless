@@ -185,3 +185,12 @@ example_s3:
       wait_for_downstream: false
       dependencies:
       - delete_bucket
+  catchup: false
+  dag_display_name: example_s3
+  owner_links: {}
+  start_date:
+    __type__: datetime.datetime
+    year: 2026
+    month: 7
+    day: 6
+  tags: []

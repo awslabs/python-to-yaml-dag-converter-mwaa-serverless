@@ -224,4 +224,13 @@ aws_data_lake:
       wildcard_match: false
       dependencies:
       - list_data-lake-raw
+  catchup: false
+  dag_display_name: aws_data_lake
   description: Dynamically generated AWS DAG for data_lake
+  owner_links: {}
+  start_date:
+    __type__: datetime.datetime
+    year: 2026
+    month: 1
+    day: 1
+  tags: []

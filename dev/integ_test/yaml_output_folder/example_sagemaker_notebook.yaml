@@ -126,3 +126,12 @@ example_sagemaker_notebook:
       wait_for_downstream: false
       dependencies:
       - stop_instance_before_delete
+  catchup: false
+  dag_display_name: example_sagemaker_notebook
+  owner_links: {}
+  start_date:
+    __type__: datetime.datetime
+    year: 2026
+    month: 1
+    day: 1
+  tags: []
