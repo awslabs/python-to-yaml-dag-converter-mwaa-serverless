@@ -550,8 +550,8 @@ example_redshift_s3_transfers:
       wait_for_completion: true
       wait_for_downstream: false
       dependencies:
-      - drop_table
       - check_if_tmp_table_key_exists
+      - drop_table
       - transfer_s3_to_redshift_tmp_table
     delete_bucket:
       operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
@@ -576,19 +576,12 @@ example_redshift_s3_transfers:
       wait_for_downstream: false
       dependencies:
       - delete_cluster
-  auto_register: true
-  catchup: true
+  catchup: false
   dag_display_name: example_redshift_s3_transfers
-  fail_fast: false
-  max_active_runs: 16
-  max_active_tasks: 16
-  max_consecutive_failed_dag_runs: 0
   owner_links: {}
-  render_template_as_native_obj: false
   start_date:
     __type__: datetime.datetime
     year: 2026
     month: 1
     day: 1
   tags: []
-  template_undefined: jinja2.runtime.StrictUndefined

@@ -2,21 +2,23 @@ example_s3:
   dag_id: example_s3
   params: {}
   default_args:
+    owner: airflow
     start_date:
       __type__: datetime.datetime
       year: 2026
-      month: 1
-      day: 1
-  schedule: '@once'
+      month: 7
+      day: 6
+    retries: 1
+  schedule: '@daily'
   tasks:
     create_bucket:
       operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
       aws_conn_id: aws_default
-      bucket_name: test-s3-bucket
+      bucket_name: py2yml-my-personal-test-s3-bucket
       outlets: []
       params: {}
       priority_weight: 1
-      retries: 0
+      retries: 1
       retry_delay:
         __type__: datetime.timedelta
         seconds: 300.0
@@ -24,8 +26,8 @@ example_s3:
       start_date:
         __type__: datetime.datetime
         year: 2026
-        month: 1
-        day: 1
+        month: 7
+        day: 6
       task_id: create_bucket
       trigger_rule: all_success
       wait_for_downstream: false
@@ -33,11 +35,11 @@ example_s3:
     create_bucket_2:
       operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
       aws_conn_id: aws_default
-      bucket_name: test-s3-bucket-2
+      bucket_name: py2yml-my-personal-test-s3-bucket-v2
       outlets: []
       params: {}
       priority_weight: 1
-      retries: 0
+      retries: 1
       retry_delay:
         __type__: datetime.timedelta
         seconds: 300.0
@@ -45,81 +47,13 @@ example_s3:
       start_date:
         __type__: datetime.datetime
         year: 2026
-        month: 1
-        day: 1
+        month: 7
+        day: 6
       task_id: create_bucket_2
       trigger_rule: all_success
       wait_for_downstream: false
       dependencies:
       - create_bucket
-    put_tagging:
-      operator: airflow.providers.amazon.aws.operators.s3.S3PutBucketTaggingOperator
-      aws_conn_id: aws_default
-      bucket_name: test-s3-bucket
-      key: test-s3-bucket-tagging-key
-      outlets: []
-      params: {}
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: put_tagging
-      trigger_rule: all_success
-      value: test-s3-bucket-tagging-value
-      wait_for_downstream: false
-      dependencies:
-      - create_bucket_2
-    get_tagging:
-      operator: airflow.providers.amazon.aws.operators.s3.S3GetBucketTaggingOperator
-      aws_conn_id: aws_default
-      bucket_name: test-s3-bucket
-      outlets: []
-      params: {}
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: get_tagging
-      trigger_rule: all_success
-      wait_for_downstream: false
-      dependencies:
-      - put_tagging
-    delete_tagging:
-      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketTaggingOperator
-      aws_conn_id: aws_default
-      bucket_name: test-s3-bucket
-      outlets: []
-      params: {}
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: delete_tagging
-      trigger_rule: all_success
-      wait_for_downstream: false
-      dependencies:
-      - get_tagging
     create_object:
       operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
       aws_conn_id: aws_default
@@ -133,23 +67,23 @@ example_s3:
       params: {}
       priority_weight: 1
       replace: true
-      retries: 0
+      retries: 1
       retry_delay:
         __type__: datetime.timedelta
         seconds: 300.0
       retry_exponential_backoff: false
-      s3_bucket: test-s3-bucket
-      s3_key: test-key
+      s3_bucket: py2yml-my-personal-test-s3-bucket
+      s3_key: py2yml-key
       start_date:
         __type__: datetime.datetime
         year: 2026
-        month: 1
-        day: 1
+        month: 7
+        day: 6
       task_id: create_object
       trigger_rule: all_success
       wait_for_downstream: false
       dependencies:
-      - delete_tagging
+      - create_bucket_2
     create_object_2:
       operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
       aws_conn_id: aws_default
@@ -163,58 +97,34 @@ example_s3:
       params: {}
       priority_weight: 1
       replace: true
-      retries: 0
+      retries: 1
       retry_delay:
         __type__: datetime.timedelta
         seconds: 300.0
       retry_exponential_backoff: false
-      s3_bucket: test-s3-bucket
-      s3_key: test-key2
+      s3_bucket: py2yml-my-personal-test-s3-bucket
+      s3_key: py2yml-key-v2
       start_date:
         __type__: datetime.datetime
         year: 2026
-        month: 1
-        day: 1
+        month: 7
+        day: 6
       task_id: create_object_2
       trigger_rule: all_success
       wait_for_downstream: false
       dependencies:
       - create_object
-    list_prefixes:
-      operator: airflow.providers.amazon.aws.operators.s3.S3ListPrefixesOperator
-      aws_conn_id: aws_default
-      bucket: test-s3-bucket
-      delimiter: /
-      outlets: []
-      params: {}
-      prefix: ''
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: list_prefixes
-      trigger_rule: all_success
-      wait_for_downstream: false
-      dependencies:
-      - create_object_2
     list_keys:
       operator: airflow.providers.amazon.aws.operators.s3.S3ListOperator
       apply_wildcard: false
       aws_conn_id: aws_default
-      bucket: test-s3-bucket
+      bucket: py2yml-my-personal-test-s3-bucket
       delimiter: ''
       outlets: []
       params: {}
       prefix: ''
       priority_weight: 1
-      retries: 0
+      retries: 1
       retry_delay:
         __type__: datetime.timedelta
         seconds: 300.0
@@ -222,395 +132,22 @@ example_s3:
       start_date:
         __type__: datetime.datetime
         year: 2026
-        month: 1
-        day: 1
+        month: 7
+        day: 6
       task_id: list_keys
       trigger_rule: all_success
       wait_for_downstream: false
       dependencies:
-      - list_prefixes
-    sensor_one_key:
-      operator: airflow.providers.amazon.aws.sensors.s3.S3KeySensor
-      aws_conn_id: aws_default
-      bucket_key: test-key
-      bucket_name: test-s3-bucket
-      deferrable: false
-      metadata_keys:
-      - Size
-      - Key
-      mode: poke
-      outlets: []
-      params: {}
-      poke_interval: 60.0
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: sensor_one_key
-      timeout: 604800.0
-      trigger_rule: all_success
-      use_regex: false
-      wait_for_downstream: false
-      wildcard_match: false
-      dependencies:
-      - list_keys
-    sensor_two_keys:
-      operator: airflow.providers.amazon.aws.sensors.s3.S3KeySensor
-      aws_conn_id: aws_default
-      bucket_key:
-      - test-key
-      - test-key2
-      bucket_name: test-s3-bucket
-      deferrable: false
-      metadata_keys:
-      - Size
-      - Key
-      mode: poke
-      outlets: []
-      params: {}
-      poke_interval: 60.0
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: sensor_two_keys
-      timeout: 604800.0
-      trigger_rule: all_success
-      use_regex: false
-      wait_for_downstream: false
-      wildcard_match: false
-      dependencies:
-      - list_keys
-    sensor_one_key_deferrable:
-      operator: airflow.providers.amazon.aws.sensors.s3.S3KeySensor
-      aws_conn_id: aws_default
-      bucket_key: test-key
-      bucket_name: test-s3-bucket
-      deferrable: true
-      metadata_keys:
-      - Size
-      - Key
-      mode: poke
-      outlets: []
-      params: {}
-      poke_interval: 60.0
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: sensor_one_key_deferrable
-      timeout: 604800.0
-      trigger_rule: all_success
-      use_regex: false
-      wait_for_downstream: false
-      wildcard_match: false
-      dependencies:
-      - sensor_one_key
-    sensor_two_keys_deferrable:
-      operator: airflow.providers.amazon.aws.sensors.s3.S3KeySensor
-      aws_conn_id: aws_default
-      bucket_key:
-      - test-key
-      - test-key2
-      bucket_name: test-s3-bucket
-      deferrable: true
-      metadata_keys:
-      - Size
-      - Key
-      mode: poke
-      outlets: []
-      params: {}
-      poke_interval: 60.0
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: sensor_two_keys_deferrable
-      timeout: 604800.0
-      trigger_rule: all_success
-      use_regex: false
-      wait_for_downstream: false
-      wildcard_match: false
-      dependencies:
-      - sensor_two_keys
-    sensor_key_with_function_deferrable:
-      operator: airflow.providers.amazon.aws.sensors.s3.S3KeySensor
-      aws_conn_id: aws_default
-      bucket_key: test-key
-      bucket_name: test-s3-bucket
-      check_fn: airflow_s3.check_fn
-      deferrable: true
-      metadata_keys:
-      - Size
-      - Key
-      mode: poke
-      outlets: []
-      params: {}
-      poke_interval: 60.0
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: sensor_key_with_function_deferrable
-      timeout: 604800.0
-      trigger_rule: all_success
-      use_regex: false
-      wait_for_downstream: false
-      wildcard_match: false
-      dependencies:
-      - sensor_key_with_function
-    sensor_key_with_regex_deferrable:
-      operator: airflow.providers.amazon.aws.sensors.s3.S3KeySensor
-      aws_conn_id: aws_default
-      bucket_key: .*-key
-      bucket_name: test-s3-bucket
-      deferrable: true
-      metadata_keys:
-      - Size
-      - Key
-      mode: poke
-      outlets: []
-      params: {}
-      poke_interval: 60.0
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: sensor_key_with_regex_deferrable
-      timeout: 604800.0
-      trigger_rule: all_success
-      use_regex: true
-      wait_for_downstream: false
-      wildcard_match: false
-      dependencies:
-      - sensor_key_with_regex
-    sensor_key_with_function:
-      operator: airflow.providers.amazon.aws.sensors.s3.S3KeySensor
-      aws_conn_id: aws_default
-      bucket_key: test-key
-      bucket_name: test-s3-bucket
-      check_fn: airflow_s3.check_fn
-      deferrable: false
-      metadata_keys:
-      - Size
-      - Key
-      mode: poke
-      outlets: []
-      params: {}
-      poke_interval: 60.0
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: sensor_key_with_function
-      timeout: 604800.0
-      trigger_rule: all_success
-      use_regex: false
-      wait_for_downstream: false
-      wildcard_match: false
-      dependencies:
-      - list_keys
-    sensor_key_with_regex:
-      operator: airflow.providers.amazon.aws.sensors.s3.S3KeySensor
-      aws_conn_id: aws_default
-      bucket_key: .*-key
-      bucket_name: test-s3-bucket
-      deferrable: false
-      metadata_keys:
-      - Size
-      - Key
-      mode: poke
-      outlets: []
-      params: {}
-      poke_interval: 60.0
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: sensor_key_with_regex
-      timeout: 604800.0
-      trigger_rule: all_success
-      use_regex: true
-      wait_for_downstream: false
-      wildcard_match: false
-      dependencies:
-      - list_keys
-    copy_object:
-      operator: airflow.providers.amazon.aws.operators.s3.S3CopyObjectOperator
-      aws_conn_id: aws_default
-      dest_bucket_key: test-key2
-      dest_bucket_name: test-s3-bucket-2
-      outlets: []
-      params: {}
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      source_bucket_key: test-key
-      source_bucket_name: test-s3-bucket
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: copy_object
-      trigger_rule: all_success
-      wait_for_downstream: false
-      dependencies:
-      - sensor_key_with_function_deferrable
-      - sensor_one_key_deferrable
-      - sensor_key_with_regex_deferrable
-      - sensor_two_keys_deferrable
-    file_transform:
-      operator: airflow.providers.amazon.aws.operators.s3.S3FileTransformOperator
-      aws_conn_id: aws_default
-      dest_aws_conn_id: aws_default
-      dest_s3_key: s3://test-s3-bucket-2/test-key2
-      outlets: []
-      params: {}
-      priority_weight: 1
-      replace: true
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      script_args: []
-      select_expr_serialization_config: {}
-      source_aws_conn_id: aws_default
-      source_s3_key: s3://test-s3-bucket/test-key
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: file_transform
-      transform_script: cp
-      trigger_rule: all_success
-      wait_for_downstream: false
-      dependencies:
-      - copy_object
-    sensor_keys_unchanged:
-      operator: airflow.providers.amazon.aws.sensors.s3.S3KeysUnchangedSensor
-      allow_delete: true
-      aws_conn_id: aws_default
-      bucket_name: test-s3-bucket-2
-      deferrable: false
-      inactivity_period: 10
-      min_objects: 1
-      mode: poke
-      outlets: []
-      params: {}
-      poke_interval: 60.0
-      prefix: ''
-      previous_objects: []
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: sensor_keys_unchanged
-      timeout: 604800.0
-      trigger_rule: all_success
-      wait_for_downstream: false
-      dependencies:
-      - file_transform
-    delete_objects:
-      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteObjectsOperator
-      aws_conn_id: aws_default
-      bucket: test-s3-bucket-2
-      keys: test-key2
-      outlets: []
-      params: {}
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: delete_objects
-      trigger_rule: all_done
-      wait_for_downstream: false
-      dependencies:
-      - sensor_keys_unchanged
+      - create_object_2
     delete_bucket:
       operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
       aws_conn_id: aws_default
-      bucket_name: test-s3-bucket
+      bucket_name: py2yml-my-personal-test-s3-bucket
       force_delete: true
       outlets: []
       params: {}
       priority_weight: 1
-      retries: 0
+      retries: 1
       retry_delay:
         __type__: datetime.timedelta
         seconds: 300.0
@@ -618,22 +155,22 @@ example_s3:
       start_date:
         __type__: datetime.datetime
         year: 2026
-        month: 1
-        day: 1
+        month: 7
+        day: 6
       task_id: delete_bucket
-      trigger_rule: all_done
+      trigger_rule: all_success
       wait_for_downstream: false
       dependencies:
-      - delete_objects
+      - list_keys
     delete_bucket_2:
       operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
       aws_conn_id: aws_default
-      bucket_name: test-s3-bucket-2
+      bucket_name: py2yml-my-personal-test-s3-bucket-v2
       force_delete: true
       outlets: []
       params: {}
       priority_weight: 1
-      retries: 0
+      retries: 1
       retry_delay:
         __type__: datetime.timedelta
         seconds: 300.0
@@ -641,26 +178,19 @@ example_s3:
       start_date:
         __type__: datetime.datetime
         year: 2026
-        month: 1
-        day: 1
+        month: 7
+        day: 6
       task_id: delete_bucket_2
-      trigger_rule: all_done
+      trigger_rule: all_success
       wait_for_downstream: false
       dependencies:
       - delete_bucket
-  auto_register: true
-  catchup: true
+  catchup: false
   dag_display_name: example_s3
-  fail_fast: false
-  max_active_runs: 16
-  max_active_tasks: 16
-  max_consecutive_failed_dag_runs: 0
   owner_links: {}
-  render_template_as_native_obj: false
   start_date:
     __type__: datetime.datetime
     year: 2026
-    month: 1
-    day: 1
+    month: 7
+    day: 6
   tags: []
-  template_undefined: jinja2.runtime.StrictUndefined
