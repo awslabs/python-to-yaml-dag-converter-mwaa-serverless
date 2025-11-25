@@ -132,9 +132,9 @@ s3_dtm_example:
       trigger_rule: all_success
       wait_for_downstream: false
       dependencies:
-      - create_object_0
-      - create_object_2
       - create_object_1
+      - create_object_2
+      - create_object_0
     delete_objects:
       operator: airflow.providers.amazon.aws.operators.s3.S3DeleteObjectsOperator
       outlets: []
@@ -183,19 +183,12 @@ s3_dtm_example:
       wait_for_downstream: false
       dependencies:
       - delete_objects
-  auto_register: true
-  catchup: true
+  catchup: false
   dag_display_name: s3_dtm_example
-  fail_fast: false
-  max_active_runs: 16
-  max_active_tasks: 16
-  max_consecutive_failed_dag_runs: 0
   owner_links: {}
-  render_template_as_native_obj: false
   start_date:
     __type__: datetime.datetime
     year: 2026
     month: 1
     day: 1
   tags: []
-  template_undefined: jinja2.runtime.StrictUndefined

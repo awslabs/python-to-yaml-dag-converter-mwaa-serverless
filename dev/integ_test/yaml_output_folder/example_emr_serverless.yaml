@@ -33,7 +33,7 @@ example_emr_serverless:
     create_emr_serverless_task:
       operator: airflow.providers.amazon.aws.operators.emr.EmrServerlessCreateApplicationOperator
       aws_conn_id: aws_default
-      client_request_token: 1dbbc52b-2fc0-4812-9dde-f040391a4fbd
+      client_request_token: 2e1e11a5-2273-4704-896e-0946669cf2c8
       config:
         name: new_application
       deferrable: false
@@ -92,7 +92,7 @@ example_emr_serverless:
       application_id: "{{ task_instance.xcom_pull(task_ids='create_emr_serverless_task',\
         \ key='return_value') }}"
       aws_conn_id: aws_default
-      client_request_token: 43feae43-fc10-49b9-bb02-976509c560c0
+      client_request_token: 4fcdce11-a324-45ca-8a4b-abd76b1d94db
       config: {}
       configuration_overrides:
         monitoringConfiguration:
@@ -153,8 +153,8 @@ example_emr_serverless:
         month: 1
         day: 1
       target_states:
-      - SUCCESS
       - RUNNING
+      - SUCCESS
       task_id: wait_for_job
       timeout: 604800.0
       trigger_rule: all_success
@@ -243,19 +243,12 @@ example_emr_serverless:
       wait_for_downstream: false
       dependencies:
       - delete_application
-  auto_register: true
-  catchup: true
+  catchup: false
   dag_display_name: example_emr_serverless
-  fail_fast: false
-  max_active_runs: 16
-  max_active_tasks: 16
-  max_consecutive_failed_dag_runs: 0
   owner_links: {}
-  render_template_as_native_obj: false
   start_date:
     __type__: datetime.datetime
     year: 2026
     month: 1
     day: 1
   tags: []
-  template_undefined: jinja2.runtime.StrictUndefined
