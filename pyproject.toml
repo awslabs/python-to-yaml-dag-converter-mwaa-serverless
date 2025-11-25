@@ -25,6 +25,7 @@ dependencies = [
     "rich>=13.7.1,<15.0.0",
     # Fastapi dependency issue https://github.com/apache/airflow/discussions/57769
     "fastapi[standard]==0.121.2",
+    "cadwyn==5.6.1",
 ]
 
 [project.scripts]
@@ -72,6 +73,9 @@ dependencies = [
 ]
 
 [[tool.hatch.envs.tests.matrix]]
+python = ["3.11", "3.12"]
+
+[[tool.hatch.envs.dev.matrix]]
 python = ["3.11", "3.12"]
 
 [tool.hatch.envs.dev.scripts]
