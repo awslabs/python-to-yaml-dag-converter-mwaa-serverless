@@ -12,6 +12,7 @@ class TestConvertTasks(unittest.TestCase):
         self.mock_validator = Mock()
         self.mock_taskflow_parser = Mock()
         self.mock_dag_object = Mock()
+        self.mock_dag_object.params = {}
 
     @patch("dag_converter.conversion.tasks.get_cleanup_dag")
     @patch("dag_converter.conversion.tasks.handle_python_decorator")
