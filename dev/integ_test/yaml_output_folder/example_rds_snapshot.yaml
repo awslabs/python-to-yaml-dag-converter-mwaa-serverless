@@ -17,7 +17,6 @@ example_rds_snapshot:
       deferrable: false
       engine: postgres
       outlets: []
-      params: {}
       priority_weight: 1
       rds_kwargs:
         MasterUsername: rds_username
@@ -49,7 +48,6 @@ example_rds_snapshot:
       db_snapshot_identifier: test-snapshot
       db_type: instance
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -75,7 +73,6 @@ example_rds_snapshot:
       hook_params: {}
       mode: poke
       outlets: []
-      params: {}
       poke_interval: 60.0
       priority_weight: 1
       retries: 0
@@ -104,7 +101,6 @@ example_rds_snapshot:
       kms_key_id: ''
       option_group_name: ''
       outlets: []
-      params: {}
       pre_signed_url: ''
       priority_weight: 1
       retries: 0
@@ -133,7 +129,6 @@ example_rds_snapshot:
       db_snapshot_identifier: test-snapshot
       db_type: instance
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -159,7 +154,6 @@ example_rds_snapshot:
       hook_params: {}
       mode: poke
       outlets: []
-      params: {}
       poke_interval: 60.0
       priority_weight: 1
       retries: 0
@@ -186,7 +180,6 @@ example_rds_snapshot:
       db_snapshot_identifier: test-snapshot-copy
       db_type: instance
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -210,7 +203,6 @@ example_rds_snapshot:
       db_instance_identifier: test-instance
       deferrable: false
       outlets: []
-      params: {}
       priority_weight: 1
       rds_kwargs:
         SkipFinalSnapshot: true

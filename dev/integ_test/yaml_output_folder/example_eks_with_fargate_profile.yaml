@@ -23,7 +23,6 @@ example_eks_with_fargate_profile:
       - namespace: default
       nodegroup_name: nodegroup
       outlets: []
-      params: {}
       priority_weight: 1
       resources_vpc_config:
         subnetIds:
@@ -54,7 +53,6 @@ example_eks_with_fargate_profile:
       cluster_name: test-cluster
       mode: poke
       outlets: []
-      params: {}
       poke_interval: 60.0
       priority_weight: 1
       retries: 0
@@ -85,7 +83,6 @@ example_eks_with_fargate_profile:
       deferrable: false
       fargate_profile_name: test-profile
       outlets: []
-      params: {}
       pod_execution_role_arn: test-fargate-pod-role-arn
       priority_weight: 1
       retries: 0
@@ -115,7 +112,6 @@ example_eks_with_fargate_profile:
       fargate_profile_name: test-profile
       mode: poke
       outlets: []
-      params: {}
       poke_interval: 60.0
       priority_weight: 1
       retries: 0
@@ -145,7 +141,6 @@ example_eks_with_fargate_profile:
       deferrable: false
       fargate_profile_name: test-profile
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -172,7 +167,6 @@ example_eks_with_fargate_profile:
       fargate_profile_name: test-profile
       mode: poke
       outlets: []
-      params: {}
       poke_interval: 10
       priority_weight: 1
       retries: 0
@@ -202,7 +196,6 @@ example_eks_with_fargate_profile:
       deferrable: false
       force_delete_compute: false
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -228,7 +221,6 @@ example_eks_with_fargate_profile:
       cluster_name: test-cluster
       mode: poke
       outlets: []
-      params: {}
       poke_interval: 10
       priority_weight: 1
       retries: 0

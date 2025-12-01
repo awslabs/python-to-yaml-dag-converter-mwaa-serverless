@@ -14,7 +14,6 @@ s3_dtm_example:
       aws_conn_id: aws_default
       bucket_name: dtm-example-bucket
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -36,7 +35,6 @@ s3_dtm_example:
       data: This is a test file
       encrypt: false
       outlets: []
-      params: {}
       priority_weight: 1
       replace: true
       retries: 0
@@ -62,7 +60,6 @@ s3_dtm_example:
       data: This is a test file
       encrypt: false
       outlets: []
-      params: {}
       priority_weight: 1
       replace: true
       retries: 0
@@ -88,7 +85,6 @@ s3_dtm_example:
       data: This is a test file
       encrypt: false
       outlets: []
-      params: {}
       priority_weight: 1
       replace: true
       retries: 0
@@ -115,7 +111,6 @@ s3_dtm_example:
       bucket: dtm-example-bucket
       delimiter: ''
       outlets: []
-      params: {}
       prefix: ''
       priority_weight: 1
       retries: 0
@@ -132,13 +127,12 @@ s3_dtm_example:
       trigger_rule: all_success
       wait_for_downstream: false
       dependencies:
-      - create_object_1
-      - create_object_2
       - create_object_0
+      - create_object_2
+      - create_object_1
     delete_objects:
       operator: airflow.providers.amazon.aws.operators.s3.S3DeleteObjectsOperator
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -166,7 +160,6 @@ s3_dtm_example:
       bucket_name: dtm-example-bucket
       force_delete: false
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:

@@ -12,7 +12,6 @@ aws_athena_queries:
     run_athena_query:
       operator: airflow.providers.amazon.aws.operators.athena.AthenaOperator
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:

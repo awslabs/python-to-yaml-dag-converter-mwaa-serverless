@@ -16,7 +16,6 @@ example_sagemaker_notebook:
       instance_name: test-test-notebook
       instance_type: ml.t3.medium
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -39,7 +38,6 @@ example_sagemaker_notebook:
       aws_conn_id: aws_default
       instance_name: test-test-notebook
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -62,7 +60,6 @@ example_sagemaker_notebook:
       aws_conn_id: aws_default
       instance_name: test-test-notebook
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -85,7 +82,6 @@ example_sagemaker_notebook:
       aws_conn_id: aws_default
       instance_name: test-test-notebook
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -108,7 +104,6 @@ example_sagemaker_notebook:
       aws_conn_id: aws_default
       instance_name: test-test-notebook
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:

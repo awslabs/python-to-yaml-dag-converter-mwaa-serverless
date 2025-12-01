@@ -14,7 +14,6 @@ example_redshift_s3_transfers:
       aws_conn_id: aws_default
       bucket_name: test-bucket
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -49,7 +48,6 @@ example_redshift_s3_transfers:
       node_type: dc2.large
       number_of_nodes: 1
       outlets: []
-      params: {}
       poll_interval: 60
       port: 5439
       priority_weight: 1
@@ -79,7 +77,6 @@ example_redshift_s3_transfers:
       deferrable: false
       mode: poke
       outlets: []
-      params: {}
       poke_interval: 5
       priority_weight: 1
       retries: 0
@@ -105,7 +102,6 @@ example_redshift_s3_transfers:
       data: "0, 'Airflow', 'testing'"
       encrypt: false
       outlets: []
-      params: {}
       priority_weight: 1
       replace: true
       retries: 0
@@ -133,7 +129,6 @@ example_redshift_s3_transfers:
       db_user: adminuser
       deferrable: false
       outlets: []
-      params: {}
       poll_interval: 10
       priority_weight: 1
       retries: 0
@@ -165,7 +160,6 @@ example_redshift_s3_transfers:
       db_user: adminuser
       deferrable: false
       outlets: []
-      params: {}
       poll_interval: 10
       priority_weight: 1
       retries: 0
@@ -192,7 +186,6 @@ example_redshift_s3_transfers:
       autocommit: false
       include_header: false
       outlets: []
-      params: {}
       priority_weight: 1
       redshift_conn_id: redshift_default
       redshift_data_api_kwargs:
@@ -232,7 +225,6 @@ example_redshift_s3_transfers:
       - Key
       mode: poke
       outlets: []
-      params: {}
       poke_interval: 60.0
       priority_weight: 1
       retries: 0
@@ -261,7 +253,6 @@ example_redshift_s3_transfers:
       db_user: adminuser
       deferrable: false
       outlets: []
-      params: {}
       poll_interval: 10
       priority_weight: 1
       retries: 0
@@ -296,7 +287,6 @@ example_redshift_s3_transfers:
       autocommit: false
       include_header: false
       outlets: []
-      params: {}
       priority_weight: 1
       redshift_conn_id: redshift_default
       redshift_data_api_kwargs:
@@ -334,7 +324,6 @@ example_redshift_s3_transfers:
       - Key
       mode: poke
       outlets: []
-      params: {}
       poke_interval: 60.0
       priority_weight: 1
       retries: 0
@@ -364,7 +353,6 @@ example_redshift_s3_transfers:
       - csv
       method: APPEND
       outlets: []
-      params: {}
       priority_weight: 1
       redshift_conn_id: redshift_default
       redshift_data_api_kwargs:
@@ -399,7 +387,6 @@ example_redshift_s3_transfers:
       db_user: adminuser
       deferrable: false
       outlets: []
-      params: {}
       poll_interval: 10
       priority_weight: 1
       retries: 0
@@ -433,7 +420,6 @@ example_redshift_s3_transfers:
       - csv
       method: APPEND
       outlets: []
-      params: {}
       priority_weight: 1
       redshift_conn_id: redshift_default
       redshift_data_api_kwargs:
@@ -467,7 +453,6 @@ example_redshift_s3_transfers:
       - csv
       method: APPEND
       outlets: []
-      params: {}
       priority_weight: 1
       redshift_conn_id: redshift_default
       redshift_data_api_kwargs:
@@ -502,7 +487,6 @@ example_redshift_s3_transfers:
       db_user: adminuser
       deferrable: false
       outlets: []
-      params: {}
       poll_interval: 10
       priority_weight: 1
       retries: 0
@@ -531,7 +515,6 @@ example_redshift_s3_transfers:
       deferrable: false
       max_attempts: 30
       outlets: []
-      params: {}
       poll_interval: 30
       priority_weight: 1
       retries: 0
@@ -550,16 +533,15 @@ example_redshift_s3_transfers:
       wait_for_completion: true
       wait_for_downstream: false
       dependencies:
+      - transfer_s3_to_redshift_tmp_table
       - check_if_tmp_table_key_exists
       - drop_table
-      - transfer_s3_to_redshift_tmp_table
     delete_bucket:
       operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
       aws_conn_id: aws_default
       bucket_name: test-bucket
       force_delete: true
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:

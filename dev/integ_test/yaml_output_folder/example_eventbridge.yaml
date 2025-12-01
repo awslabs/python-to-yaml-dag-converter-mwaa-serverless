@@ -18,7 +18,6 @@ example_eventbridge:
         Source: example.myapp
         DetailType: Sample Custom Event
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -41,7 +40,6 @@ example_eventbridge:
       event_pattern: '{"source": ["example.myapp"]}'
       name: example_rule
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -64,7 +62,6 @@ example_eventbridge:
       aws_conn_id: aws_default
       name: example_rule
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -86,7 +83,6 @@ example_eventbridge:
       aws_conn_id: aws_default
       name: example_rule
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:

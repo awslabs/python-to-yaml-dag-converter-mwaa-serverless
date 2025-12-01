@@ -19,7 +19,6 @@ aws_data_lake:
       aws_conn_id: aws_default
       bucket_name: data-lake-raw
       outlets: []
-      params: {}
       priority_weight: 1
       region_name: us-east-1
       retries: 1
@@ -41,7 +40,6 @@ aws_data_lake:
       aws_conn_id: aws_default
       bucket_name: data-lake-processed
       outlets: []
-      params: {}
       priority_weight: 1
       region_name: us-east-1
       retries: 1
@@ -64,7 +62,6 @@ aws_data_lake:
       data: sample,data,1
       encrypt: false
       outlets: []
-      params: {}
       priority_weight: 1
       replace: true
       retries: 1
@@ -90,7 +87,6 @@ aws_data_lake:
       data: sample,data,2
       encrypt: false
       outlets: []
-      params: {}
       priority_weight: 1
       replace: true
       retries: 1
@@ -117,7 +113,6 @@ aws_data_lake:
       bucket: data-lake-raw
       delimiter: ''
       outlets: []
-      params: {}
       prefix: ''
       priority_weight: 1
       retries: 1
@@ -143,7 +138,6 @@ aws_data_lake:
       bucket: data-lake-processed
       delimiter: ''
       outlets: []
-      params: {}
       prefix: ''
       priority_weight: 1
       retries: 1
@@ -171,7 +165,6 @@ aws_data_lake:
       - Key
       mode: poke
       outlets: []
-      params: {}
       poke_interval: 30
       priority_weight: 1
       retries: 1
@@ -203,7 +196,6 @@ aws_data_lake:
       - Key
       mode: poke
       outlets: []
-      params: {}
       poke_interval: 30
       priority_weight: 1
       retries: 1

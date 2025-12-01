@@ -14,7 +14,6 @@ example_emr_serverless:
       aws_conn_id: aws_default
       bucket_name: test-emr-serverless-bucket
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -33,13 +32,12 @@ example_emr_serverless:
     create_emr_serverless_task:
       operator: airflow.providers.amazon.aws.operators.emr.EmrServerlessCreateApplicationOperator
       aws_conn_id: aws_default
-      client_request_token: 2e1e11a5-2273-4704-896e-0946669cf2c8
+      client_request_token: 4fae5b6b-40a2-44ac-ac96-0023faf5881f
       config:
         name: new_application
       deferrable: false
       job_type: SPARK
       outlets: []
-      params: {}
       priority_weight: 1
       release_label: emr-6.6.0
       retries: 0
@@ -67,7 +65,6 @@ example_emr_serverless:
       aws_conn_id: aws_default
       mode: poke
       outlets: []
-      params: {}
       poke_interval: 1
       priority_weight: 1
       retries: 0
@@ -80,7 +77,7 @@ example_emr_serverless:
         year: 2026
         month: 1
         day: 1
-      target_states: "frozenset({'STARTED', 'CREATED'})"
+      target_states: "frozenset({'CREATED', 'STARTED'})"
       task_id: wait_for_app_creation
       timeout: 604800.0
       trigger_rule: all_success
@@ -92,7 +89,7 @@ example_emr_serverless:
       application_id: "{{ task_instance.xcom_pull(task_ids='create_emr_serverless_task',\
         \ key='return_value') }}"
       aws_conn_id: aws_default
-      client_request_token: 4fcdce11-a324-45ca-8a4b-abd76b1d94db
+      client_request_token: 2f4e65e3-8b0b-4c5c-bf1b-f86620a7ce55
       config: {}
       configuration_overrides:
         monitoringConfiguration:
@@ -109,7 +106,6 @@ example_emr_serverless:
           sparkSubmitParameters: --conf spark.executor.cores=1 --conf spark.executor.memory=4g                --conf
             spark.driver.cores=1 --conf spark.driver.memory=4g --conf spark.executor.instances=1
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -139,7 +135,6 @@ example_emr_serverless:
         \ key='return_value') }}"
       mode: poke
       outlets: []
-      params: {}
       poke_interval: 10
       priority_weight: 1
       retries: 0
@@ -153,15 +148,15 @@ example_emr_serverless:
         month: 1
         day: 1
       target_states:
-      - RUNNING
       - SUCCESS
+      - RUNNING
       task_id: wait_for_job
       timeout: 604800.0
       trigger_rule: all_success
       wait_for_downstream: false
       dependencies:
-      - create_emr_serverless_task
       - start_emr_serverless_job
+      - create_emr_serverless_task
     stop_application:
       operator: airflow.providers.amazon.aws.operators.emr.EmrServerlessStopApplicationOperator
       application_id: "{{ task_instance.xcom_pull(task_ids='create_emr_serverless_task',\
@@ -170,7 +165,6 @@ example_emr_serverless:
       deferrable: false
       force_stop: true
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -199,7 +193,6 @@ example_emr_serverless:
       deferrable: false
       force_stop: false
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -226,7 +219,6 @@ example_emr_serverless:
       bucket_name: test-emr-serverless-bucket
       force_delete: true
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:

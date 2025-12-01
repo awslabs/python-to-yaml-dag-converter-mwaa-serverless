@@ -14,11 +14,10 @@ example_emr_notebook:
       aws_conn_id: aws_default
       cluster_id: test-cluster-id
       editor_id: test-editor-id
-      notebook_execution_name: emr_notebook_192badcd-7ce3-41e0-988f-de8a585c0bd1
+      notebook_execution_name: emr_notebook_2962607f-212e-4c9c-828f-dd1dac981ea7
       notebook_instance_security_group_id: ''
       notebook_params: ''
       outlets: []
-      params: {}
       priority_weight: 1
       relative_path: EMR-System-Test.ipynb
       retries: 0
@@ -49,7 +48,6 @@ example_emr_notebook:
       notebook_execution_id: "{{ task_instance.xcom_pull(task_ids='start_execution',\
         \ key='return_value') }}"
       outlets: []
-      params: {}
       poke_interval: 5
       priority_weight: 1
       retries: 0
@@ -76,7 +74,6 @@ example_emr_notebook:
       notebook_execution_id: "{{ task_instance.xcom_pull(task_ids='start_execution',\
         \ key='return_value') }}"
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -95,8 +92,8 @@ example_emr_notebook:
       waiter_delay: 60
       waiter_max_attempts: 25
       dependencies:
-      - start_execution
       - wait_for_execution_start
+      - start_execution
     wait_for_execution_stop:
       operator: airflow.providers.amazon.aws.sensors.emr.EmrNotebookExecutionSensor
       aws_conn_id: aws_default
@@ -106,7 +103,6 @@ example_emr_notebook:
       notebook_execution_id: "{{ task_instance.xcom_pull(task_ids='start_execution',\
         \ key='return_value') }}"
       outlets: []
-      params: {}
       poke_interval: 5
       priority_weight: 1
       retries: 0
@@ -126,18 +122,17 @@ example_emr_notebook:
       trigger_rule: all_success
       wait_for_downstream: false
       dependencies:
-      - start_execution
       - stop_execution
+      - start_execution
     finish_execution:
       operator: airflow.providers.amazon.aws.operators.emr.EmrStartNotebookExecutionOperator
       aws_conn_id: aws_default
       cluster_id: test-cluster-id
       editor_id: test-editor-id
-      notebook_execution_name: emr_notebook_de99ca2d-1396-4bad-a92f-41ca6370f73a
+      notebook_execution_name: emr_notebook_d635c78a-1ca3-46f1-874b-ae8fd5a60a43
       notebook_instance_security_group_id: ''
       notebook_params: ''
       outlets: []
-      params: {}
       priority_weight: 1
       relative_path: EMR-System-Test.ipynb
       retries: 0
@@ -169,7 +164,6 @@ example_emr_notebook:
       notebook_execution_id: "{{ task_instance.xcom_pull(task_ids='finish_execution',\
         \ key='return_value') }}"
       outlets: []
-      params: {}
       poke_interval: 5
       priority_weight: 1
       retries: 0
