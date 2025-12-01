@@ -254,3 +254,155 @@ class TestGetOperatorParameters(unittest.TestCase):
 
         # Verify that the list is not empty
         self.assertGreater(len(parameters), 0, "EmptyOperator should have at least some parameters")
+
+    @patch("dag_converter.conversion.tasks.get_operator_parameters")
+    def test_params_filtered_when_matching_dag_params(self, mock_get_params):
+        """Test that task params are filtered when they match DAG params"""
+        mock_get_params.return_value = ["params", "task_id"]
+        mock_validator = Mock()
+        mock_validator.validate_field.return_value = True
+        mock_taskflow_parser = Mock()
+        
+        # Create DAG with params
+        mock_dag = Mock()
+        mock_dag.params = {"s3_bucket": "test-bucket", "s3_prefix": "test-prefix"}
+        
+        # Create task with same params (inherited)
+        task = Mock()
+        task.task_id = "test_task"
+        task.task_type = "S3CreateObjectOperator"
+        task.__module__ = "airflow.providers.amazon.aws.operators.s3"
+        task.upstream_task_ids = []
+        task._is_mapped = False
+        task.params = {"s3_bucket": "test-bucket", "s3_prefix": "test-prefix"}
+        task._BaseOperator__init_kwargs = {}
+        del task._task_module
+        
+        with patch("builtins.dir", return_value=["task_id", "params"]):
+            mock_dag.tasks = [task]
+            result = convert_tasks(mock_taskflow_parser, mock_dag, "test.py", mock_validator)
+        
+        # params should be filtered out since they match DAG params
+        self.assertNotIn("params", result["test_task"])
+
+    @patch("dag_converter.conversion.tasks.get_operator_parameters")
+    def test_params_kept_when_different_from_dag_params(self, mock_get_params):
+        """Test that task params are kept when they differ from DAG params"""
+        mock_get_params.return_value = ["params", "task_id"]
+        mock_validator = Mock()
+        mock_validator.validate_field.return_value = True
+        mock_taskflow_parser = Mock()
+        
+        # Create DAG with params
+        mock_dag = Mock()
+        mock_dag.params = {"s3_bucket": "test-bucket"}
+        
+        # Create task with different params
+        task = Mock()
+        task.task_id = "test_task"
+        task.task_type = "S3CreateObjectOperator"
+        task.__module__ = "airflow.providers.amazon.aws.operators.s3"
+        task.upstream_task_ids = []
+        task._is_mapped = False
+        task.params = {"s3_bucket": "different-bucket", "custom_param": "value"}
+        task._BaseOperator__init_kwargs = {}
+        del task._task_module
+        
+        with patch("builtins.dir", return_value=["task_id", "params"]):
+            mock_dag.tasks = [task]
+            result = convert_tasks(mock_taskflow_parser, mock_dag, "test.py", mock_validator)
+        
+        # params should be kept since they differ from DAG params
+        self.assertIn("params", result["test_task"])
+        self.assertEqual(result["test_task"]["params"], {"s3_bucket": "different-bucket", "custom_param": "value"})
+
+    @patch("dag_converter.conversion.tasks.get_operator_parameters")
+    def test_empty_params_filtered_when_dag_params_empty(self, mock_get_params):
+        """Test that empty task params are filtered when DAG params are also empty"""
+        mock_get_params.return_value = ["params", "task_id"]
+        mock_validator = Mock()
+        mock_validator.validate_field.return_value = True
+        mock_taskflow_parser = Mock()
+        
+        # Create DAG with empty params
+        mock_dag = Mock()
+        mock_dag.params = {}
+        
+        # Create task with empty params
+        task = Mock()
+        task.task_id = "test_task"
+        task.task_type = "S3CreateObjectOperator"
+        task.__module__ = "airflow.providers.amazon.aws.operators.s3"
+        task.upstream_task_ids = []
+        task._is_mapped = False
+        task.params = {}
+        task._BaseOperator__init_kwargs = {}
+        del task._task_module
+        
+        with patch("builtins.dir", return_value=["task_id", "params"]):
+            mock_dag.tasks = [task]
+            result = convert_tasks(mock_taskflow_parser, mock_dag, "test.py", mock_validator)
+        
+        # empty params should be filtered out
+        self.assertNotIn("params", result["test_task"])
+
+    @patch("dag_converter.conversion.tasks.get_operator_parameters")
+    def test_identical_params_filtered_even_when_in_init_kwargs(self, mock_get_params):
+        """Test that task params are filtered when they match DAG params even if in init_kwargs"""
+        mock_get_params.return_value = ["params", "task_id"]
+        mock_validator = Mock()
+        mock_validator.validate_field.return_value = True
+        mock_taskflow_parser = Mock()
+        
+        # Create DAG with params
+        mock_dag = Mock()
+        mock_dag.params = {"s3_bucket": "test-bucket", "s3_prefix": "test-prefix"}
+        
+        # Create task with identical params in init_kwargs (Airflow auto-adds them)
+        task = Mock()
+        task.task_id = "test_task"
+        task.task_type = "S3CreateObjectOperator"
+        task.__module__ = "airflow.providers.amazon.aws.operators.s3"
+        task.upstream_task_ids = []
+        task._is_mapped = False
+        task.params = {"s3_bucket": "test-bucket", "s3_prefix": "test-prefix"}
+        task._BaseOperator__init_kwargs = {"params": {"s3_bucket": "test-bucket", "s3_prefix": "test-prefix"}}
+        del task._task_module
+        
+        with patch("builtins.dir", return_value=["task_id", "params"]):
+            mock_dag.tasks = [task]
+            result = convert_tasks(mock_taskflow_parser, mock_dag, "test.py", mock_validator)
+        
+        # params should be filtered since they match DAG params (not explicitly different)
+        self.assertNotIn("params", result["test_task"])
+
+    @patch("dag_converter.conversion.tasks.get_operator_parameters")
+    def test_params_kept_when_same_key_different_value(self, mock_get_params):
+        """Test that task params are kept when they have same key but different value from DAG params"""
+        mock_get_params.return_value = ["params", "task_id"]
+        mock_validator = Mock()
+        mock_validator.validate_field.return_value = True
+        mock_taskflow_parser = Mock()
+        
+        # Create DAG with params
+        mock_dag = Mock()
+        mock_dag.params = {"s3_bucket": "dag-bucket"}
+        
+        # Create task with same key but different value
+        task = Mock()
+        task.task_id = "test_task"
+        task.task_type = "S3CreateObjectOperator"
+        task.__module__ = "airflow.providers.amazon.aws.operators.s3"
+        task.upstream_task_ids = []
+        task._is_mapped = False
+        task.params = {"s3_bucket": "task-bucket"}
+        task._BaseOperator__init_kwargs = {}
+        del task._task_module
+        
+        with patch("builtins.dir", return_value=["task_id", "params"]):
+            mock_dag.tasks = [task]
+            result = convert_tasks(mock_taskflow_parser, mock_dag, "test.py", mock_validator)
+        
+        # params should be kept since value differs (task overrides DAG)
+        self.assertIn("params", result["test_task"])
+        self.assertEqual(result["test_task"]["params"], {"s3_bucket": "task-bucket"})

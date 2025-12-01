@@ -17,7 +17,6 @@ example_rds_instance:
       deferrable: false
       engine: postgres
       outlets: []
-      params: {}
       priority_weight: 1
       rds_kwargs:
         MasterUsername: database_username
@@ -52,7 +51,6 @@ example_rds_instance:
       hook_params: {}
       mode: poke
       outlets: []
-      params: {}
       poke_interval: 60.0
       priority_weight: 1
       retries: 0
@@ -83,7 +81,6 @@ example_rds_instance:
         - instance
       deferrable: false
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -113,7 +110,6 @@ example_rds_instance:
         - instance
       deferrable: false
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -139,7 +135,6 @@ example_rds_instance:
       db_instance_identifier: test-database
       deferrable: false
       outlets: []
-      params: {}
       priority_weight: 1
       rds_kwargs:
         SkipFinalSnapshot: true

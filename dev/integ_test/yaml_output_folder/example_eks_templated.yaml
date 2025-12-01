@@ -23,7 +23,6 @@ example_eks_templated:
       - namespace: default
       nodegroup_name: nodegroup
       outlets: []
-      params: {}
       priority_weight: 1
       resources_vpc_config:
         subnetIds:
@@ -54,7 +53,6 @@ example_eks_templated:
       cluster_name: test-cluster
       mode: poke
       outlets: []
-      params: {}
       poke_interval: 60.0
       priority_weight: 1
       retries: 0
@@ -89,7 +87,6 @@ example_eks_templated:
       - subnet-12345ab
       - subnet-67890cd
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -116,7 +113,6 @@ example_eks_templated:
       mode: poke
       nodegroup_name: test-nodegroup
       outlets: []
-      params: {}
       poke_interval: 60.0
       priority_weight: 1
       retries: 0
@@ -146,7 +142,6 @@ example_eks_templated:
       deferrable: false
       nodegroup_name: test-nodegroup
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -173,7 +168,6 @@ example_eks_templated:
       mode: poke
       nodegroup_name: test-nodegroup
       outlets: []
-      params: {}
       poke_interval: 60.0
       priority_weight: 1
       retries: 0
@@ -203,7 +197,6 @@ example_eks_templated:
       deferrable: false
       force_delete_compute: false
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -229,7 +222,6 @@ example_eks_templated:
       cluster_name: test-cluster
       mode: poke
       outlets: []
-      params: {}
       poke_interval: 60.0
       priority_weight: 1
       retries: 0

@@ -16,7 +16,6 @@ example_s3:
       aws_conn_id: aws_default
       bucket_name: py2yml-my-personal-test-s3-bucket
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 1
       retry_delay:
@@ -37,7 +36,6 @@ example_s3:
       aws_conn_id: aws_default
       bucket_name: py2yml-my-personal-test-s3-bucket-v2
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 1
       retry_delay:
@@ -64,7 +62,6 @@ example_s3:
             bread,4.0
       encrypt: false
       outlets: []
-      params: {}
       priority_weight: 1
       replace: true
       retries: 1
@@ -94,7 +91,6 @@ example_s3:
             bread,4.0
       encrypt: false
       outlets: []
-      params: {}
       priority_weight: 1
       replace: true
       retries: 1
@@ -121,7 +117,6 @@ example_s3:
       bucket: py2yml-my-personal-test-s3-bucket
       delimiter: ''
       outlets: []
-      params: {}
       prefix: ''
       priority_weight: 1
       retries: 1
@@ -145,7 +140,6 @@ example_s3:
       bucket_name: py2yml-my-personal-test-s3-bucket
       force_delete: true
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 1
       retry_delay:
@@ -168,7 +162,6 @@ example_s3:
       bucket_name: py2yml-my-personal-test-s3-bucket-v2
       force_delete: true
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 1
       retry_delay:

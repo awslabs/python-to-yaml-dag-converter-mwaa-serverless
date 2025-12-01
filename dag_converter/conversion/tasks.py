@@ -21,6 +21,16 @@ def convert_tasks(
     """Convert each task into acceptable DagFactory format"""
     tasks = {}
     task_types = {}
+    
+    # Get DAG-level params to filter them out from tasks
+    dag_params_obj = getattr(dag_object, "params", None)
+    dag_params = {}
+    if dag_params_obj and hasattr(dag_params_obj, "items"):
+        for key, param in dag_params_obj.items():
+            if hasattr(param, "value"):
+                dag_params[key] = param.value
+            else:
+                dag_params[key] = param
 
     # First iteration through tasks to map each task id to its corresponding operator type
     for task in dag_object.tasks:
@@ -35,6 +45,11 @@ def convert_tasks(
         task_id = task.task_id
         if not task_id:
             continue
+
+        # Check if params was explicitly set (different from DAG params)
+        init_kwargs = getattr(task, "_BaseOperator__init_kwargs", {})
+        params_in_init = init_kwargs.get("params", {})
+        params_explicitly_set = "params" in init_kwargs and params_in_init != dag_params
 
         # Edge case for DTM, since it stores the actual operator module in '_task_module' instead
         if isinstance(task, MappedOperator):
@@ -66,6 +81,9 @@ def convert_tasks(
                     or value is None
                 ):
                     pass
+                # Skip params only if they match DAG params AND were not explicitly set
+                elif key == "params" and value == dag_params and not params_explicitly_set:
+                    pass
                 else:
                     tasks[task_id][key] = value
 
@@ -75,7 +93,11 @@ def convert_tasks(
             parameters = getattr(task, "_BaseOperator__init_kwargs", None)
             for key, value in parameters.items():
                 if validator.validate_field("task", key, value) and key in valid_task_parameters and value is not None:
-                    tasks[task_id][key] = value
+                    # Skip params only if they match DAG params AND were not explicitly set
+                    if key == "params" and value == dag_params and not params_explicitly_set:
+                        pass
+                    else:
+                        tasks[task_id][key] = value
 
         tasks[task_id]["dependencies"] = list(getattr(task, "upstream_task_ids", []))
 
