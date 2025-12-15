@@ -14,7 +14,6 @@ example_comprehend:
       aws_conn_id: aws_default
       bucket_name: test-comprehend
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -37,7 +36,6 @@ example_comprehend:
         Ville Suite 682", "mail": "test@hotmail.com"}'
       encrypt: false
       outlets: []
-      params: {}
       priority_weight: 1
       replace: false
       retries: 0
@@ -63,7 +61,6 @@ example_comprehend:
       bucket_name: test-comprehend
       force_delete: true
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -93,7 +90,6 @@ example_comprehend:
       outlets: []
       output_data_config:
         S3Uri: s3://test-comprehend/redacted_output/
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -128,7 +124,6 @@ example_comprehend:
       max_retries: 75
       mode: poke
       outlets: []
-      params: {}
       poke_interval: 120
       priority_weight: 1
       retries: 0

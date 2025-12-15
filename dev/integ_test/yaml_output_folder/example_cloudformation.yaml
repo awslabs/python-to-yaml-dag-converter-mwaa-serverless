@@ -19,7 +19,6 @@ example_cloudformation:
         TimeoutInMinutes: 2
         OnFailure: DELETE
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -41,7 +40,6 @@ example_cloudformation:
       aws_conn_id: aws_default
       mode: poke
       outlets: []
-      params: {}
       poke_interval: 10
       priority_weight: 1
       retries: 0
@@ -66,7 +64,6 @@ example_cloudformation:
       aws_conn_id: aws_default
       cloudformation_parameters: {}
       outlets: []
-      params: {}
       priority_weight: 1
       retries: 0
       retry_delay:
@@ -89,7 +86,6 @@ example_cloudformation:
       aws_conn_id: aws_default
       mode: poke
       outlets: []
-      params: {}
       poke_interval: 10
       priority_weight: 1
       retries: 0

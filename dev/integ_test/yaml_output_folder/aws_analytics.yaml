@@ -19,7 +19,6 @@ aws_analytics:
       aws_conn_id: aws_default
       bucket_name: analytics-reports
       outlets: []
-      params: {}
       priority_weight: 1
       region_name: us-west-2
       retries: 1
@@ -42,7 +41,6 @@ aws_analytics:
       data: '{"status":"ok"}'
       encrypt: false
       outlets: []
-      params: {}
       priority_weight: 1
       replace: true
       retries: 1
@@ -69,7 +67,6 @@ aws_analytics:
       bucket: analytics-reports
       delimiter: ''
       outlets: []
-      params: {}
       prefix: ''
       priority_weight: 1
       retries: 1
@@ -98,7 +95,6 @@ aws_analytics:
       - Key
       mode: poke
       outlets: []
-      params: {}
       poke_interval: 30
       priority_weight: 1
       retries: 1
