@@ -15,7 +15,7 @@ simple_empty_dag:
   schedule: None
   tasks:
     do_nothing:
-      operator: airflow.providers.standard.operators.empty.EmptyOperator
+      operator: airflow.operators.empty.EmptyOperator
       outlets: []
       priority_weight: 1
       retries: 1

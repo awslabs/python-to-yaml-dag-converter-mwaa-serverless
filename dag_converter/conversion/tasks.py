@@ -15,6 +15,15 @@ from dag_converter.schema_parser import ArgumentValidator
 from dag_converter.taskflow_parser import TaskFlowAnalyzer
 
 
+def normalize_operator_path(operator_path: str) -> str:
+    """Normalize Airflow 3.x provider paths to short-form paths.
+
+    In Airflow 3, core operators were moved to apache-airflow-providers-standard,
+    but MWAA Serverless expects airflow.operators.* paths.
+    """
+    return operator_path.replace("airflow.providers.standard.", "airflow.")
+
+
 def convert_tasks(
     taskflow_parser: TaskFlowAnalyzer, dag_object: DAG, dag_file_path: Path, validator: ArgumentValidator
 ):
@@ -60,6 +69,7 @@ def convert_tasks(
         else:
             full_operator_name = f"{task.__module__}.{task.task_type}"
 
+        full_operator_name = normalize_operator_path(full_operator_name)
         tasks[task_id] = {"operator": full_operator_name}
         valid_task_parameters = get_operator_parameters(full_operator_name)
 
