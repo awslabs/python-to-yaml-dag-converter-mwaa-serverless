@@ -344,11 +344,13 @@ task:
     "airflow.providers.standard.operators.empty.EmptyOperator",
     "airflow.providers.amazon.aws.transfers.http_to_s3.HttpToS3Operator",
     "airflow.providers.amazon.aws.sensors.sagemaker.SageMakerProcessingSensor",
+    "airflow.providers.amazon.aws.sensors.sagemaker_unified_studio_notebook.SageMakerUnifiedStudioNotebookSensor",
     "airflow.providers.amazon.aws.sensors.mwaa.MwaaDagRunSensor",
     "airflow.providers.amazon.aws.transfers.redshift_to_s3.RedshiftToS3Operator",
     "airflow.providers.amazon.aws.transfers.sql_to_s3.SqlToS3Operator",
     "airflow.providers.amazon.aws.transfers.local_to_s3.LocalFilesystemToS3Operator",
     "airflow.providers.amazon.aws.operators.sagemaker_unified_studio.SageMakerNotebookOperator",
+    "airflow.providers.amazon.aws.operators.sagemaker_unified_studio_notebook.SageMakerUnifiedStudioNotebookOperator",
     "airflow.providers.amazon.aws.transfers.s3_to_dynamodb.S3ToDynamoDBOperator",
     "airflow.providers.amazon.aws.operators.mwaa.MwaaTriggerDagRunOperator",
     "airflow.providers.amazon.aws.transfers.s3_to_redshift.S3ToRedshiftOperator",
@@ -401,6 +403,7 @@ task:
   checksum: any(required=False)
   client_context: any(required=False)
   client_request_token: any(required=False)
+  client_token: any(required=False)
   cloudformation_parameters: any(required=False)
   cluster: any(required=False)
   cluster_id: any(required=False)
@@ -418,6 +421,7 @@ task:
   compression: any(required=False)
   compute: any(required=False)
   compute_config: any(required=False)
+  compute_configuration: any(required=False)
   compute_environment_name: any(required=False)
   compute_resources: any(required=False)
   concurrent_run_limit: any(required=False)
@@ -479,6 +483,7 @@ task:
   document_classifier_kwargs: any(required=False)
   document_classifier_name: any(required=False)
   document_name: any(required=False)
+  domain_identifier: any(required=False)
   ecs_properties_override: any(required=False)
   editor_id: any(required=False)
   eks_cluster_name: any(required=False)
@@ -613,8 +618,11 @@ task:
   note: any(required=False)
   notebook_execution_id: any(required=False)
   notebook_execution_name: any(required=False)
+  notebook_identifier: any(required=False)
   notebook_instance_security_group_id: any(required=False)
+  notebook_parameters: any(required=False)
   notebook_params: any(required=False)
+  notebook_run_id: any(required=False)
   num_of_dpus: any(required=False)
   number_logs_exception: any(required=False)
   number_of_nodes: any(required=False)
@@ -628,6 +636,7 @@ task:
   output_location: any(required=False)
   output_uri: any(required=False)
   overrides: any(required=False)
+  owning_project_identifier: any(required=False)
   package_desc: any(required=False)
   package_group_desc: any(required=False)
   package_group_name: any(required=False)
@@ -767,6 +776,7 @@ task:
   termination_condition: any(required=False)
   time_limit: any(required=False)
   timeout: any(required=False)
+  timeout_configuration: any(required=False)
   to_datetime: any(required=False)
   training_data_uri: any(required=False)
   transform_script: any(required=False)

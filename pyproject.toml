@@ -19,7 +19,7 @@ classifiers = [
 ]
 dependencies = [
     "apache-airflow==3.0.6",
-    "apache-airflow-providers-amazon==9.10.0",
+    "apache-airflow-providers-amazon==9.30.0",
     "apache-airflow-providers-cncf-kubernetes==10.6.1",
     "boto3>=1.37.3",
     "dag-factory==1.0.0",

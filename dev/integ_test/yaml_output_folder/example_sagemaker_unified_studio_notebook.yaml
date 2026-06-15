@@ -1,0 +1,106 @@
+example_sagemaker_unified_studio_notebook:
+  dag_id: example_sagemaker_unified_studio_notebook
+  params: {}
+  default_args: {}
+  schedule: '@once'
+  tasks:
+    notebook-task:
+      operator: airflow.providers.amazon.aws.operators.sagemaker_unified_studio_notebook.SageMakerUnifiedStudioNotebookOperator
+      aws_conn_id: aws_datazone_notebook
+      deferrable: false
+      outlets: []
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2021
+        month: 1
+        day: 1
+      task_id: notebook-task
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      waiter_delay: 30
+      dependencies: []
+    notebook-sensor-task:
+      operator: airflow.providers.amazon.aws.sensors.sagemaker_unified_studio_notebook.SageMakerUnifiedStudioNotebookSensor
+      aws_conn_id: aws_datazone_notebook
+      mode: poke
+      outlets: []
+      poke_interval: 60.0
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2021
+        month: 1
+        day: 1
+      task_id: notebook-sensor-task
+      timeout: 604800.0
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - notebook-task
+    notebook-a-task:
+      operator: airflow.providers.amazon.aws.operators.sagemaker_unified_studio_notebook.SageMakerUnifiedStudioNotebookOperator
+      aws_conn_id: aws_datazone_notebook
+      deferrable: false
+      outlets: []
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2021
+        month: 1
+        day: 1
+      task_id: notebook-a-task
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      waiter_delay: 10
+      dependencies:
+      - notebook-sensor-task
+    notebook-b-task:
+      operator: airflow.providers.amazon.aws.operators.sagemaker_unified_studio_notebook.SageMakerUnifiedStudioNotebookOperator
+      aws_conn_id: aws_datazone_notebook
+      deferrable: false
+      outlets: []
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2021
+        month: 1
+        day: 1
+      task_id: notebook-b-task
+      trigger_rule: all_success
+      wait_for_completion: true
+      wait_for_downstream: false
+      waiter_delay: 10
+      dependencies:
+      - notebook-a-task
+  catchup: false
+  dag_display_name: example_sagemaker_unified_studio_notebook
+  owner_links: {}
+  start_date:
+    __type__: datetime.datetime
+    year: 2021
+    month: 1
+    day: 1
+  tags: []

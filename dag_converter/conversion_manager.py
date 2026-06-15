@@ -116,7 +116,7 @@ class ConversionManager:
                     with open(output_path, "w") as f:
                         f.write(str(dag_yaml))
                     print_info(f"YAML written to {output_path} despite validation failure")
-                    raise Exception("Validation failed")
+                    raise Exception(f"Validation failed: {message}")
                 else:
                     print_success("YAML validation successful, no errors found")
 
