@@ -65,7 +65,7 @@ except Exception as e:
                     final_dag_object = get_dag_factory_object(dags_dir)
                 except Exception as e:
                     print_error(str(e))
-                    return False, "No DAGs were loaded from the YAML file. Check for missing required parameters."
+                    return False, f"No DAGs were loaded from the YAML file: {e}"
 
                 # Log Dag Object comparison information
                 if initial_dag_object:

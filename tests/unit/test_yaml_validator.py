@@ -57,7 +57,7 @@ class TestYamlValidator(unittest.TestCase):
             result, message = validate_yaml_with_dagbag(self.test_dag, self.invalid_yaml, self.sample_dag_path)
 
             self.assertFalse(result)
-            self.assertEqual(message, "No DAGs were loaded from the YAML file. Check for missing required parameters.")
+            self.assertEqual(message, "No DAGs were loaded from the YAML file: Failed to generate dag object")
             mock_print_error.assert_called_once_with("Failed to generate dag object")
 
     def test_validate_yaml_with_dagbag_temp_file_creation(self):
