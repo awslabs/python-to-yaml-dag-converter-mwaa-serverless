@@ -21,3 +21,5 @@ wheels/
 
 # VSCode
 .vscode
+# Debug output of dag-converter convert --debug
+.initial_task_attributes

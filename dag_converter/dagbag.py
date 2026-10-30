@@ -12,6 +12,11 @@ from airflow.models.dagbag import DagBag
 from airflow.sdk import BaseOperator
 from airflow.sdk.definitions._internal.types import NOTSET
 
+
+class NoDagFoundError(Exception):
+    """The file imports without errors but does not define a Dag"""
+
+
 # Attribute holding the keyword arguments the Dag file passed to the operator class
 USER_KWARGS_ATTRIBUTE = "_dag_converter_user_kwargs"
 # Attribute holding the public attributes of the operator right after __init__
@@ -177,7 +182,7 @@ def get_dag_object(dag_file_path: Path) -> list[DAG]:
             f"Failed to generate dag object for file {dag_file_path}. DagBag import errors:\n{details}"
         )
 
-    raise Exception(f"Failed to generate dag object for file {dag_file_path}")
+    raise NoDagFoundError(f"Failed to generate dag object for file {dag_file_path}. It does not define a Dag")
 
 
 def get_dag_factory_object(dag_file_path: Path) -> DAG:
