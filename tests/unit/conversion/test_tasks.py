@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 from airflow.providers.standard.decorators.python import _PythonDecoratedOperator
 from airflow.sdk.definitions.mappedoperator import MappedOperator
 
-from dag_converter.conversion.tasks import convert_tasks, get_operator_parameters
+from dag_converter.conversion.tasks import convert_tasks, get_operator_parameters, operator_accepts_var_kwargs
 
 
 class TestConvertTasks(unittest.TestCase):
@@ -51,6 +51,69 @@ class TestConvertTasks(unittest.TestCase):
             }
         }
         self.assertEqual(result, expected)
+
+    @patch("dag_converter.conversion.tasks.get_cleanup_dag")
+    @patch("dag_converter.conversion.tasks.handle_python_decorator")
+    @patch("dag_converter.conversion.tasks.get_operator_parameters")
+    def test_custom_operator_conversion(self, mock_get_params, mock_handle_python, mock_cleanup):
+        """Test custom operator defined in the Dag file keeps its own arguments"""
+        mock_get_params.return_value = ["greeting", "env", "dag", "task_group"]
+        # The schema does not list the custom operator arguments
+        self.mock_validator.validate_field.return_value = False
+
+        task = Mock()
+        task.task_id = "greet"
+        task.task_type = "GreetOperator"
+        task.__module__ = "unusual_prefix_2f500f07efb257480a518fd2ae2d10b7c9df3cd2_my_dag"
+        task.upstream_task_ids = []
+        task._BaseOperator__init_kwargs = {
+            "greeting": "Hi",
+            "env": {"A": "1"},
+            "dag": Mock(),
+            "task_group": Mock(),
+        }
+        del task._task_module
+
+        with patch("builtins.dir", return_value=["task_id", "task_type"]):
+            self.mock_dag_object.tasks = [task]
+
+            result = convert_tasks(self.mock_taskflow_parser, self.mock_dag_object, "my_dag.py", self.mock_validator)
+
+        expected = {
+            "greet": {
+                "operator": "my_dag.GreetOperator",
+                "greeting": "Hi",
+                "env": {"A": "1"},
+                "dependencies": [],
+            }
+        }
+        self.assertEqual(result, expected)
+
+    @patch("dag_converter.conversion.tasks.operator_accepts_var_kwargs")
+    @patch("dag_converter.conversion.tasks.get_cleanup_dag")
+    @patch("dag_converter.conversion.tasks.handle_python_decorator")
+    @patch("dag_converter.conversion.tasks.get_operator_parameters")
+    def test_var_kwargs_arguments(self, mock_get_params, mock_handle_python, mock_cleanup, mock_accepts_var_kwargs):
+        """Test arguments read from **kwargs are kept only if the operator accepts **kwargs"""
+        mock_get_params.return_value = ["greeting"]
+        self.mock_validator.validate_field.return_value = False
+
+        task = Mock()
+        task.task_id = "greet"
+        task.task_type = "GreetOperator"
+        task.__module__ = "my_operators"
+        task.upstream_task_ids = []
+        task._BaseOperator__init_kwargs = {"greeting": "Hi", "extra": "via_kwargs"}
+        del task._task_module
+        self.mock_dag_object.tasks = [task]
+
+        for accepts_var_kwargs, expected_extra in [(True, True), (False, False)]:
+            mock_accepts_var_kwargs.return_value = accepts_var_kwargs
+            with patch("builtins.dir", return_value=["task_id", "task_type"]):
+                result = convert_tasks(self.mock_taskflow_parser, self.mock_dag_object, "my_dag.py", self.mock_validator)
+
+            self.assertEqual(result["greet"]["greeting"], "Hi")
+            self.assertEqual("extra" in result["greet"], expected_extra)
 
     @unittest.skip("Python operators not supported")
     @patch("dag_converter.conversion.tasks.get_cleanup_dag")
@@ -214,6 +277,22 @@ class TestConvertTasks(unittest.TestCase):
         self.assertNotIn("partial_kwargs", result["test_task"])
         # Regular param should be included
         self.assertIn("param1", result["test_task"])
+
+
+class TestOperatorAcceptsVarKwargs(unittest.TestCase):
+    def test_operator_accepts_var_kwargs(self):
+        """Test detection of **kwargs in the operator __init__"""
+
+        class WithKwargs:
+            def __init__(self, name, **kwargs):
+                pass
+
+        class WithoutKwargs:
+            def __init__(self, name):
+                pass
+
+        self.assertTrue(operator_accepts_var_kwargs(WithKwargs))
+        self.assertFalse(operator_accepts_var_kwargs(WithoutKwargs))
 
 
 class TestGetOperatorParameters(unittest.TestCase):

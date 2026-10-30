@@ -5,14 +5,17 @@ from pathlib import Path
 from airflow.models.dag import DAG
 from airflow.models.operator import Operator
 from airflow.providers.standard.decorators.python import _PythonDecoratedOperator
+from airflow.providers.standard.operators.python import PythonOperator
 from airflow.sdk.definitions.mappedoperator import MappedOperator
 
-from dag_converter.cleanup import get_cleanup_dag
+from dag_converter.cleanup import get_cleanup_dag, get_module_name
 from dag_converter.conversion.dynamic_mapping import handle_dynamic_task_mapping
 from dag_converter.conversion.exceptions import InvalidOperatorError
 from dag_converter.conversion.operators.python_decorator import handle_python_decorator
 from dag_converter.schema_parser import ArgumentValidator
 from dag_converter.taskflow_parser import TaskFlowAnalyzer
+
+CONTEXT_TASK_ARGUMENTS = ["dag", "task_group"]
 
 
 def convert_tasks(
@@ -58,10 +61,18 @@ def convert_tasks(
 
             full_operator_name = f"{task._task_module}.{task.task_type}"
         else:
-            full_operator_name = f"{task.__module__}.{task.task_type}"
+            full_operator_name = f"{get_module_name(task.__module__)}.{task.task_type}"
+
+        if isinstance(task, PythonOperator) and inspect.ismethod(getattr(task, "python_callable", None)):
+            raise InvalidOperatorError(
+                f"Operator {task.task_type} is not supported, it sets python_callable to one of its own methods"
+            )
 
         tasks[task_id] = {"operator": full_operator_name}
-        valid_task_parameters = get_operator_parameters(full_operator_name)
+        valid_task_parameters = get_operator_parameters(
+            full_operator_name if isinstance(task, MappedOperator) else type(task)
+        )
+        accepts_var_kwargs = not isinstance(task, MappedOperator) and operator_accepts_var_kwargs(type(task))
 
         # Handle TaskFlow
         if isinstance(task, _PythonDecoratedOperator):
@@ -92,7 +103,13 @@ def convert_tasks(
         if hasattr(task, "_BaseOperator__init_kwargs"):
             parameters = getattr(task, "_BaseOperator__init_kwargs", None)
             for key, value in parameters.items():
-                if validator.validate_field("task", key, value) and key in valid_task_parameters and value is not None:
+                in_schema = validator.validate_field("task", key, value, no_value_check=True)
+                if (
+                    (not in_schema or validator.validate_field("task", key, value))
+                    and (key in valid_task_parameters or accepts_var_kwargs)
+                    and key not in CONTEXT_TASK_ARGUMENTS
+                    and value is not None
+                ):
                     # Skip params only if they match DAG params AND were not explicitly set
                     if key == "params" and value == dag_params and not params_explicitly_set:
                         pass
@@ -130,6 +147,18 @@ def convert_tasks(
                 del tasks[task_id]["failure_states"]
 
     return tasks
+
+
+def operator_accepts_var_kwargs(operator_class: type[Operator]) -> bool:
+    """
+    Returns whether the operator's __init__ accepts **kwargs. BaseOperator rejects arguments no
+    operator class consumed, so passed arguments that are not named parameters were read from **kwargs.
+    """
+    try:
+        sig = inspect.signature(operator_class.__init__)
+    except (TypeError, ValueError):
+        return False
+    return any(param.kind is inspect.Parameter.VAR_KEYWORD for param in sig.parameters.values())
 
 
 def get_operator_parameters(operator_class_or_string: type[Operator] | str) -> list[str]:
