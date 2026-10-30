@@ -1,0 +1,52 @@
+example_s3_to_ftp:
+  dag_id: example_s3_to_ftp
+  params: {}
+  default_args:
+    start_date:
+      __type__: pendulum.naive
+      __args__:
+      - 2026
+      - 1
+      - 1
+      - 0
+      - 0
+      - 0
+      - 0
+      fold: 0
+  schedule: '@once'
+  tasks:
+    create_s3_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      task_id: create_s3_bucket
+      bucket_name: test-s3-to-ftp-bucket
+      dependencies: []
+    ftp_to_s3_task:
+      operator: airflow.providers.amazon.aws.transfers.s3_to_ftp.S3ToFTPOperator
+      task_id: ftp_to_s3_task
+      ftp_path: /tmp/ftp_path
+      s3_bucket: test-s3-to-ftp-bucket
+      s3_key: test-s3-to-ftp-key
+      dependencies:
+      - create_s3_bucket
+    delete_s3_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
+      task_id: delete_s3_bucket
+      bucket_name: test-s3-to-ftp-bucket
+      force_delete: true
+      trigger_rule: all_done
+      dependencies:
+      - ftp_to_s3_task
+  catchup: false
+  dag_display_name: example_s3_to_ftp
+  start_date:
+    __type__: pendulum.naive
+    __args__:
+    - 2026
+    - 1
+    - 1
+    - 0
+    - 0
+    - 0
+    - 0
+    fold: 0
+  tags: []

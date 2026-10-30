@@ -3,67 +3,63 @@ dynamic_dag_inventory:
   params: {}
   default_args:
     owner: airflow
-    start_date: '2026-01-01'
+    start_date:
+      __type__: pendulum.naive
+      __args__:
+      - 2026
+      - 1
+      - 1
+      - 0
+      - 0
+      - 0
+      - 0
+      fold: 0
     retries: 1
-    retry_delay: 300.0
-  schedule: 0 0 * * ? *
+    retry_delay:
+      __type__: datetime.timedelta
+      seconds: 300.0
+  schedule: '@daily'
   tasks:
     start:
       operator: airflow.providers.standard.operators.bash.BashOperator
-      bash_command: echo 'Starting processing for inventory'
-      outlets: []
-      params: {}
-      priority_weight: 1
-      retries: 1
-      retry_delay: 300.0
-      retry_exponential_backoff: false
       task_id: start
-      trigger_rule: all_success
-      wait_for_downstream: false
+      bash_command: "echo 'Starting processing for inventory'"
       dependencies: []
     process_stock:
       operator: airflow.providers.standard.operators.python.PythonOperator
-      op_args: []
+      task_id: process_stock
+      python_callable: dag_gen_config.process_data
       op_kwargs:
         data_source: /data/inventory/stock
-      outlets: []
-      params: {}
-      priority_weight: 1
-      python_callable: dag_gen_config.process_data
-      retries: 1
-      retry_delay: 300.0
-      retry_exponential_backoff: false
-      task_id: process_stock
-      trigger_rule: all_success
-      wait_for_downstream: false
-      dependencies: [start]
+      dependencies:
+      - start
     process_suppliers:
       operator: airflow.providers.standard.operators.python.PythonOperator
-      op_args: []
+      task_id: process_suppliers
+      python_callable: dag_gen_config.process_data
       op_kwargs:
         data_source: /data/inventory/suppliers
-      outlets: []
-      params: {}
-      priority_weight: 1
-      python_callable: dag_gen_config.process_data
-      retries: 1
-      retry_delay: 300.0
-      retry_exponential_backoff: false
-      task_id: process_suppliers
-      trigger_rule: all_success
-      wait_for_downstream: false
-      dependencies: [start]
+      dependencies:
+      - start
     end:
       operator: airflow.providers.standard.operators.bash.BashOperator
-      bash_command: echo 'Completed processing for inventory'
-      outlets: []
-      params: {}
-      priority_weight: 1
-      retries: 1
-      retry_delay: 300.0
-      retry_exponential_backoff: false
       task_id: end
-      trigger_rule: all_success
-      wait_for_downstream: false
-      dependencies: [process_stock, process_suppliers]
+      bash_command: "echo 'Completed processing for inventory'"
+      dependencies:
+      - process_suppliers
+      - process_stock
+  catchup: false
+  dag_display_name: dynamic_dag_inventory
   description: Dynamically generated DAG for inventory
+  start_date:
+    __type__: pendulum.naive
+    __args__:
+    - 2026
+    - 1
+    - 1
+    - 0
+    - 0
+    - 0
+    - 0
+    fold: 0
+  tags: []

@@ -3,108 +3,59 @@ example_eventbridge:
   params: {}
   default_args:
     start_date:
-      __type__: datetime.datetime
-      year: 2026
-      month: 1
-      day: 1
+      __type__: pendulum.naive
+      __args__:
+      - 2026
+      - 1
+      - 1
+      - 0
+      - 0
+      - 0
+      - 0
+      fold: 0
   schedule: '@once'
   tasks:
     put_events_task:
       operator: airflow.providers.amazon.aws.operators.eventbridge.EventBridgePutEventsOperator
-      aws_conn_id: aws_default
+      task_id: put_events_task
       entries:
       - Detail: '{"event-name": "custom-event"}'
         EventBusName: custom-bus
         Source: example.myapp
         DetailType: Sample Custom Event
-      outlets: []
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: put_events_task
-      trigger_rule: all_success
-      wait_for_downstream: false
       dependencies: []
     put_rule_task:
       operator: airflow.providers.amazon.aws.operators.eventbridge.EventBridgePutRuleOperator
-      aws_conn_id: aws_default
-      description: This rule matches events from example.myapp.
-      event_pattern: '{"source": ["example.myapp"]}'
-      name: example_rule
-      outlets: []
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      state: DISABLED
       task_id: put_rule_task
-      trigger_rule: all_success
-      wait_for_downstream: false
+      name: example_rule
+      event_pattern: '{"source": ["example.myapp"]}'
+      description: This rule matches events from example.myapp.
+      state: DISABLED
       dependencies:
       - put_events_task
     enable_rule_task:
       operator: airflow.providers.amazon.aws.operators.eventbridge.EventBridgeEnableRuleOperator
-      aws_conn_id: aws_default
-      name: example_rule
-      outlets: []
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
       task_id: enable_rule_task
-      trigger_rule: all_success
-      wait_for_downstream: false
+      name: example_rule
       dependencies:
       - put_rule_task
     disable_rule_task:
       operator: airflow.providers.amazon.aws.operators.eventbridge.EventBridgeDisableRuleOperator
-      aws_conn_id: aws_default
-      name: example_rule
-      outlets: []
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
       task_id: disable_rule_task
-      trigger_rule: all_success
-      wait_for_downstream: false
+      name: example_rule
       dependencies:
       - enable_rule_task
   catchup: false
   dag_display_name: example_eventbridge
-  owner_links: {}
   start_date:
-    __type__: datetime.datetime
-    year: 2026
-    month: 1
-    day: 1
+    __type__: pendulum.naive
+    __args__:
+    - 2026
+    - 1
+    - 1
+    - 0
+    - 0
+    - 0
+    - 0
+    fold: 0
   tags: []

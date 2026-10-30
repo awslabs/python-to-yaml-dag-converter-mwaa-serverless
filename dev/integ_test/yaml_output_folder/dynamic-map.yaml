@@ -2,42 +2,51 @@ dynamic-map:
   dag_id: dynamic-map
   params: {}
   default_args:
-    start_date: '2026-04-02'
-  schedule: 0 0 * * ? *
+    start_date:
+      __type__: pendulum.naive
+      __args__:
+      - 2026
+      - 4
+      - 2
+      - 0
+      - 0
+      - 0
+      - 0
+      fold: 0
+  schedule: '@daily'
   tasks:
-    add_one:
-      operator: airflow.providers.standard.decorators.python._PythonDecoratedOperator
-      outlets: []
-      params: {}
-      priority_weight: 1
-      python_callable: dtm_repeated_mapping.add_one
-      retries: 0
-      retry_delay: 300.0
-      retry_exponential_backoff: false
-      task_id: add_one
-      trigger_rule: all_success
-      wait_for_downstream: false
+    get_input:
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      task_id: get_input
+      python_callable: dtm_xcom_mapped.list_some_names
       dependencies: []
+    count_lines:
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      dependencies:
+      - get_input
       expand:
-        x: [1, 2, 3]
-      partial:
-        op_args: []
-        op_kwargs: {}
-    add_one__1:
-      operator: airflow.providers.standard.decorators.python._PythonDecoratedOperator
-      outlets: []
-      params: {}
-      priority_weight: 1
-      python_callable: dtm_repeated_mapping.add_one
-      retries: 0
-      retry_delay: 300.0
-      retry_exponential_backoff: false
-      task_id: add_one__1
-      trigger_rule: all_success
-      wait_for_downstream: false
-      dependencies: [add_one]
-      expand:
-        x: +add_one
-      partial:
-        op_args: []
-        op_kwargs: {}
+        op_args: get_input.output
+      python_callable: dtm_xcom_mapped.count_lines_func
+    total:
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      task_id: total
+      python_callable: dtm_xcom_mapped.total_func
+      op_kwargs:
+        lines: "{{ task_instance.xcom_pull(task_ids='count_lines', key='return_value')\
+          \ }}"
+      dependencies:
+      - count_lines
+  catchup: false
+  dag_display_name: dynamic-map
+  start_date:
+    __type__: pendulum.naive
+    __args__:
+    - 2026
+    - 4
+    - 2
+    - 0
+    - 0
+    - 0
+    - 0
+    fold: 0
+  tags: []

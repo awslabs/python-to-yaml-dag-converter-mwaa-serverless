@@ -3,100 +3,46 @@ example_emr_serverless:
   params: {}
   default_args:
     start_date:
-      __type__: datetime.datetime
-      year: 2026
-      month: 1
-      day: 1
+      __type__: pendulum.naive
+      __args__:
+      - 2026
+      - 1
+      - 1
+      - 0
+      - 0
+      - 0
+      - 0
+      fold: 0
   schedule: '@once'
   tasks:
     create_s3_bucket:
       operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
-      aws_conn_id: aws_default
-      bucket_name: test-emr-serverless-bucket
-      outlets: []
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
       task_id: create_s3_bucket
-      trigger_rule: all_success
-      wait_for_downstream: false
+      bucket_name: test-emr-serverless-bucket
       dependencies: []
     create_emr_serverless_task:
       operator: airflow.providers.amazon.aws.operators.emr.EmrServerlessCreateApplicationOperator
-      aws_conn_id: aws_default
-      client_request_token: 4fae5b6b-40a2-44ac-ac96-0023faf5881f
+      task_id: create_emr_serverless_task
+      release_label: emr-6.6.0
+      job_type: SPARK
       config:
         name: new_application
-      deferrable: false
-      job_type: SPARK
-      outlets: []
-      priority_weight: 1
-      release_label: emr-6.6.0
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: create_emr_serverless_task
-      trigger_rule: all_success
       wait_for_completion: false
-      wait_for_downstream: false
-      waiter_delay: 60
-      waiter_max_attempts: 25
       dependencies:
       - create_s3_bucket
     wait_for_app_creation:
       operator: airflow.providers.amazon.aws.sensors.emr.EmrServerlessApplicationSensor
+      task_id: wait_for_app_creation
       application_id: "{{ task_instance.xcom_pull(task_ids='create_emr_serverless_task',\
         \ key='return_value') }}"
-      aws_conn_id: aws_default
-      mode: poke
-      outlets: []
       poke_interval: 1
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      target_states: "frozenset({'CREATED', 'STARTED'})"
-      task_id: wait_for_app_creation
-      timeout: 604800.0
-      trigger_rule: all_success
-      wait_for_downstream: false
       dependencies:
       - create_emr_serverless_task
     start_emr_serverless_job:
       operator: airflow.providers.amazon.aws.operators.emr.EmrServerlessStartJobOperator
+      task_id: start_emr_serverless_job
       application_id: "{{ task_instance.xcom_pull(task_ids='create_emr_serverless_task',\
         \ key='return_value') }}"
-      aws_conn_id: aws_default
-      client_request_token: 2f4e65e3-8b0b-4c5c-bf1b-f86620a7ce55
-      config: {}
-      configuration_overrides:
-        monitoringConfiguration:
-          s3MonitoringConfiguration:
-            logUri: s3://test-emr-serverless-bucket/logs
-      deferrable: false
-      enable_application_ui_links: false
       execution_role_arn: test-role-arn
       job_driver:
         sparkSubmit:
@@ -105,142 +51,67 @@ example_emr_serverless:
           - s3://test-emr-serverless-bucket/output
           sparkSubmitParameters: --conf spark.executor.cores=1 --conf spark.executor.memory=4g                --conf
             spark.driver.cores=1 --conf spark.driver.memory=4g --conf spark.executor.instances=1
-      outlets: []
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: start_emr_serverless_job
-      trigger_rule: all_success
+      configuration_overrides:
+        monitoringConfiguration:
+          s3MonitoringConfiguration:
+            logUri: s3://test-emr-serverless-bucket/logs
       wait_for_completion: false
-      wait_for_downstream: false
-      waiter_delay: 60
-      waiter_max_attempts: 25
       dependencies:
       - create_emr_serverless_task
       - wait_for_app_creation
     wait_for_job:
       operator: airflow.providers.amazon.aws.sensors.emr.EmrServerlessJobSensor
+      task_id: wait_for_job
       application_id: "{{ task_instance.xcom_pull(task_ids='create_emr_serverless_task',\
         \ key='return_value') }}"
-      aws_conn_id: aws_default
       job_run_id: "{{ task_instance.xcom_pull(task_ids='start_emr_serverless_job',\
         \ key='return_value') }}"
-      mode: poke
-      outlets: []
-      poke_interval: 10
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
       target_states:
-      - SUCCESS
-      - RUNNING
-      task_id: wait_for_job
-      timeout: 604800.0
-      trigger_rule: all_success
-      wait_for_downstream: false
+        __type__: builtins.set
+        __args__:
+        - - RUNNING
+          - SUCCESS
+      poke_interval: 10
       dependencies:
-      - start_emr_serverless_job
       - create_emr_serverless_task
+      - start_emr_serverless_job
     stop_application:
       operator: airflow.providers.amazon.aws.operators.emr.EmrServerlessStopApplicationOperator
+      task_id: stop_application
       application_id: "{{ task_instance.xcom_pull(task_ids='create_emr_serverless_task',\
         \ key='return_value') }}"
-      aws_conn_id: aws_default
-      deferrable: false
       force_stop: true
-      outlets: []
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: stop_application
-      trigger_rule: all_success
-      wait_for_completion: true
-      wait_for_downstream: false
-      waiter_delay: 60
-      waiter_max_attempts: 25
       dependencies:
       - create_emr_serverless_task
       - wait_for_job
     delete_application:
       operator: airflow.providers.amazon.aws.operators.emr.EmrServerlessDeleteApplicationOperator
+      task_id: delete_application
       application_id: "{{ task_instance.xcom_pull(task_ids='create_emr_serverless_task',\
         \ key='return_value') }}"
-      aws_conn_id: aws_default
-      deferrable: false
-      force_stop: false
-      outlets: []
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: delete_application
       trigger_rule: all_done
-      wait_for_completion: true
-      wait_for_downstream: false
-      waiter_delay: 60
-      waiter_max_attempts: 25
       dependencies:
       - create_emr_serverless_task
       - stop_application
     delete_s3_bucket:
       operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
-      aws_conn_id: aws_default
+      task_id: delete_s3_bucket
       bucket_name: test-emr-serverless-bucket
       force_delete: true
-      outlets: []
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: delete_s3_bucket
       trigger_rule: all_done
-      wait_for_downstream: false
       dependencies:
       - delete_application
   catchup: false
   dag_display_name: example_emr_serverless
-  owner_links: {}
   start_date:
-    __type__: datetime.datetime
-    year: 2026
-    month: 1
-    day: 1
+    __type__: pendulum.naive
+    __args__:
+    - 2026
+    - 1
+    - 1
+    - 0
+    - 0
+    - 0
+    - 0
+    fold: 0
   tags: []

@@ -4,186 +4,88 @@ example_s3:
   default_args:
     owner: airflow
     start_date:
-      __type__: datetime.datetime
-      year: 2026
-      month: 7
-      day: 6
+      __type__: pendulum.naive
+      __args__:
+      - 2026
+      - 7
+      - 6
+      - 0
+      - 0
+      - 0
+      - 0
+      fold: 0
     retries: 1
   schedule: '@daily'
   tasks:
     create_bucket:
       operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
-      aws_conn_id: aws_default
-      bucket_name: py2yml-my-personal-test-s3-bucket
-      outlets: []
-      priority_weight: 1
-      retries: 1
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 7
-        day: 6
       task_id: create_bucket
-      trigger_rule: all_success
-      wait_for_downstream: false
+      bucket_name: py2yml-my-personal-test-s3-bucket
       dependencies: []
     create_bucket_2:
       operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
-      aws_conn_id: aws_default
-      bucket_name: py2yml-my-personal-test-s3-bucket-v2
-      outlets: []
-      priority_weight: 1
-      retries: 1
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 7
-        day: 6
       task_id: create_bucket_2
-      trigger_rule: all_success
-      wait_for_downstream: false
+      bucket_name: py2yml-my-personal-test-s3-bucket-v2
       dependencies:
       - create_bucket
     create_object:
       operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
-      aws_conn_id: aws_default
+      task_id: create_object
+      s3_bucket: py2yml-my-personal-test-s3-bucket
+      s3_key: py2yml-key
       data: |2
 
             apple,0.5
             milk,2.5
             bread,4.0
-      encrypt: false
-      outlets: []
-      priority_weight: 1
       replace: true
-      retries: 1
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      s3_bucket: py2yml-my-personal-test-s3-bucket
-      s3_key: py2yml-key
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 7
-        day: 6
-      task_id: create_object
-      trigger_rule: all_success
-      wait_for_downstream: false
       dependencies:
       - create_bucket_2
     create_object_2:
       operator: airflow.providers.amazon.aws.operators.s3.S3CreateObjectOperator
-      aws_conn_id: aws_default
+      task_id: create_object_2
+      s3_bucket: py2yml-my-personal-test-s3-bucket
+      s3_key: py2yml-key-v2
       data: |2
 
             apple,0.5
             milk,2.5
             bread,4.0
-      encrypt: false
-      outlets: []
-      priority_weight: 1
       replace: true
-      retries: 1
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      s3_bucket: py2yml-my-personal-test-s3-bucket
-      s3_key: py2yml-key-v2
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 7
-        day: 6
-      task_id: create_object_2
-      trigger_rule: all_success
-      wait_for_downstream: false
       dependencies:
       - create_object
     list_keys:
       operator: airflow.providers.amazon.aws.operators.s3.S3ListOperator
-      apply_wildcard: false
-      aws_conn_id: aws_default
-      bucket: py2yml-my-personal-test-s3-bucket
-      delimiter: ''
-      outlets: []
-      prefix: ''
-      priority_weight: 1
-      retries: 1
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 7
-        day: 6
       task_id: list_keys
-      trigger_rule: all_success
-      wait_for_downstream: false
+      bucket: py2yml-my-personal-test-s3-bucket
+      prefix: ''
       dependencies:
       - create_object_2
     delete_bucket:
       operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
-      aws_conn_id: aws_default
+      task_id: delete_bucket
       bucket_name: py2yml-my-personal-test-s3-bucket
       force_delete: true
-      outlets: []
-      priority_weight: 1
-      retries: 1
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 7
-        day: 6
-      task_id: delete_bucket
-      trigger_rule: all_success
-      wait_for_downstream: false
       dependencies:
       - list_keys
     delete_bucket_2:
       operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
-      aws_conn_id: aws_default
+      task_id: delete_bucket_2
       bucket_name: py2yml-my-personal-test-s3-bucket-v2
       force_delete: true
-      outlets: []
-      priority_weight: 1
-      retries: 1
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 7
-        day: 6
-      task_id: delete_bucket_2
-      trigger_rule: all_success
-      wait_for_downstream: false
       dependencies:
       - delete_bucket
   catchup: false
   dag_display_name: example_s3
-  owner_links: {}
   start_date:
-    __type__: datetime.datetime
-    year: 2026
-    month: 7
-    day: 6
+    __type__: pendulum.naive
+    __args__:
+    - 2026
+    - 7
+    - 6
+    - 0
+    - 0
+    - 0
+    - 0
+    fold: 0
   tags: []

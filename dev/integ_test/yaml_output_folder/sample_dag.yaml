@@ -1,25 +1,71 @@
 sample_dag:
   dag_id: sample_dag
-  params: {}
+  params:
+    names:
+      __type__: airflow.sdk.definitions.param.Param
+      __args__:
+      - - Linda
+        - Martha
+        - Thomas
+      type: array
+      title: Names to greet
+      description: Define the list of names for which greetings should be generated
+        in the logs. Please have one name per line.
+    english:
+      __type__: airflow.sdk.definitions.param.Param
+      __args__:
+      - true
+      type: boolean
+      title: English
+    german:
+      __type__: airflow.sdk.definitions.param.Param
+      __args__:
+      - true
+      type: boolean
+      title: German (Formal)
+    french:
+      __type__: airflow.sdk.definitions.param.Param
+      __args__:
+      - true
+      type: boolean
+      title: French
   default_args:
     owner: airflow
-    start_date: '2026-01-01'
+    start_date:
+      __type__: pendulum.naive
+      __args__:
+      - 2026
+      - 1
+      - 1
+      - 0
+      - 0
+      - 0
+      - 0
+      fold: 0
     retries: 1
-    retry_delay: 300.0
-  schedule: 0 0 * * ? *
+    retry_delay:
+      __type__: datetime.timedelta
+      seconds: 300.0
+  schedule: '@daily'
   tasks:
     task1:
       operator: airflow.providers.standard.operators.python.PythonOperator
-      op_args: [42]
-      op_kwargs: {}
-      outlets: []
-      params: {}
-      priority_weight: 1
-      python_callable: simple_python_context_manager.my_function
-      retries: 1
-      retry_delay: 300.0
-      retry_exponential_backoff: false
       task_id: task1
-      trigger_rule: all_success
-      wait_for_downstream: false
+      python_callable: param.my_function
+      op_args:
+      - 42
       dependencies: []
+  catchup: false
+  dag_display_name: sample_dag
+  start_date:
+    __type__: pendulum.naive
+    __args__:
+    - 2026
+    - 1
+    - 1
+    - 0
+    - 0
+    - 0
+    - 0
+    fold: 0
+  tags: []

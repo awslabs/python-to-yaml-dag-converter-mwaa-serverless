@@ -3,130 +3,61 @@ example_sagemaker_notebook:
   params: {}
   default_args:
     start_date:
-      __type__: datetime.datetime
-      year: 2026
-      month: 1
-      day: 1
+      __type__: pendulum.naive
+      __args__:
+      - 2026
+      - 1
+      - 1
+      - 0
+      - 0
+      - 0
+      - 0
+      fold: 0
   schedule: '@once'
   tasks:
     create_instance:
       operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerCreateNotebookOperator
-      aws_conn_id: aws_default
-      create_instance_kwargs: {}
+      task_id: create_instance
       instance_name: test-test-notebook
       instance_type: ml.t3.medium
-      outlets: []
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
       role_arn: test-role-arn
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: create_instance
-      trigger_rule: all_success
       wait_for_completion: true
-      wait_for_downstream: false
       dependencies: []
     stop_instance:
       operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerStopNotebookOperator
-      aws_conn_id: aws_default
-      instance_name: test-test-notebook
-      outlets: []
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
       task_id: stop_instance
-      trigger_rule: all_success
-      wait_for_completion: true
-      wait_for_downstream: false
+      instance_name: test-test-notebook
       dependencies:
       - create_instance
     start_instance:
       operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerStartNoteBookOperator
-      aws_conn_id: aws_default
-      instance_name: test-test-notebook
-      outlets: []
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
       task_id: start_instance
-      trigger_rule: all_success
-      wait_for_completion: true
-      wait_for_downstream: false
+      instance_name: test-test-notebook
       dependencies:
       - stop_instance
     stop_instance_before_delete:
       operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerStopNotebookOperator
-      aws_conn_id: aws_default
-      instance_name: test-test-notebook
-      outlets: []
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
       task_id: stop_instance_before_delete
-      trigger_rule: all_success
-      wait_for_completion: true
-      wait_for_downstream: false
+      instance_name: test-test-notebook
       dependencies:
       - start_instance
     delete_instance:
       operator: airflow.providers.amazon.aws.operators.sagemaker.SageMakerDeleteNotebookOperator
-      aws_conn_id: aws_default
-      instance_name: test-test-notebook
-      outlets: []
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
       task_id: delete_instance
-      trigger_rule: all_success
-      wait_for_completion: true
-      wait_for_downstream: false
+      instance_name: test-test-notebook
       dependencies:
       - stop_instance_before_delete
   catchup: false
   dag_display_name: example_sagemaker_notebook
-  owner_links: {}
   start_date:
-    __type__: datetime.datetime
-    year: 2026
-    month: 1
-    day: 1
+    __type__: pendulum.naive
+    __args__:
+    - 2026
+    - 1
+    - 1
+    - 0
+    - 0
+    - 0
+    - 0
+    fold: 0
   tags: []

@@ -3,29 +3,20 @@ aws_athena_queries:
   params: {}
   default_args:
     start_date:
-      __type__: datetime.datetime
-      year: 2026
-      month: 1
-      day: 1
+      __type__: pendulum.naive
+      __args__:
+      - 2026
+      - 1
+      - 1
+      - 0
+      - 0
+      - 0
+      - 0
+      fold: 0
   schedule: '@daily'
   tasks:
     run_athena_query:
       operator: airflow.providers.amazon.aws.operators.athena.AthenaOperator
-      outlets: []
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: run_athena_query
-      trigger_rule: all_success
-      wait_for_downstream: false
       dependencies: []
       expand:
         query:
@@ -33,17 +24,19 @@ aws_athena_queries:
         - "SELECT * FROM customers WHERE signup_date > '2023-01-01'"
         - SELECT * FROM products WHERE inventory < 100
       partial:
-        aws_conn_id: aws_default
         database: analytics
         output_location: s3://my-athena-results/
-        sleep_time: 30
-        weight_rule: downstream
   catchup: false
   dag_display_name: aws_athena_queries
-  owner_links: {}
   start_date:
-    __type__: datetime.datetime
-    year: 2026
-    month: 1
-    day: 1
+    __type__: pendulum.naive
+    __args__:
+    - 2026
+    - 1
+    - 1
+    - 0
+    - 0
+    - 0
+    - 0
+    fold: 0
   tags: []

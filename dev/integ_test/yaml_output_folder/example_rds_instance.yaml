@@ -3,165 +3,69 @@ example_rds_instance:
   params: {}
   default_args:
     start_date:
-      __type__: datetime.datetime
-      year: 2026
-      month: 1
-      day: 1
+      __type__: pendulum.naive
+      __args__:
+      - 2026
+      - 1
+      - 1
+      - 0
+      - 0
+      - 0
+      - 0
+      fold: 0
   schedule: '@once'
   tasks:
     create_db_instance:
       operator: airflow.providers.amazon.aws.operators.rds.RdsCreateDbInstanceOperator
-      aws_conn_id: aws_default
-      db_instance_class: db.t4g.micro
+      task_id: create_db_instance
       db_instance_identifier: test-database
-      deferrable: false
+      db_instance_class: db.t4g.micro
       engine: postgres
-      outlets: []
-      priority_weight: 1
       rds_kwargs:
         MasterUsername: database_username
         MasterUserPassword: database_password
         AllocatedStorage: 20
         PubliclyAccessible: false
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: create_db_instance
-      trigger_rule: all_success
       wait_for_completion: false
-      wait_for_downstream: false
-      waiter_delay: 30
-      waiter_max_attempts: 60
       dependencies: []
     await_db_instance:
       operator: airflow.providers.amazon.aws.sensors.rds.RdsDbSensor
-      aws_conn_id: aws_default
-      db_identifier: test-database
-      db_type:
-        __type__: airflow.providers.amazon.aws.utils.rds.RdsDbType
-        __args__:
-        - instance
-      hook_params: {}
-      mode: poke
-      outlets: []
-      poke_interval: 60.0
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      target_statuses:
-      - available
       task_id: await_db_instance
-      timeout: 604800.0
-      trigger_rule: all_success
-      wait_for_downstream: false
+      db_identifier: test-database
       dependencies:
       - create_db_instance
     stop_db_instance:
       operator: airflow.providers.amazon.aws.operators.rds.RdsStopDbOperator
-      aws_conn_id: aws_default
-      db_identifier: test-database
-      db_type:
-        __type__: airflow.providers.amazon.aws.utils.rds.RdsDbType
-        __args__:
-        - instance
-      deferrable: false
-      outlets: []
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
       task_id: stop_db_instance
-      trigger_rule: all_success
-      wait_for_completion: true
-      wait_for_downstream: false
-      waiter_delay: 30
-      waiter_max_attempts: 40
+      db_identifier: test-database
       dependencies:
       - await_db_instance
     start_db_instance:
       operator: airflow.providers.amazon.aws.operators.rds.RdsStartDbOperator
-      aws_conn_id: aws_default
-      db_identifier: test-database
-      db_type:
-        __type__: airflow.providers.amazon.aws.utils.rds.RdsDbType
-        __args__:
-        - instance
-      deferrable: false
-      outlets: []
-      priority_weight: 1
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
       task_id: start_db_instance
-      trigger_rule: all_success
-      wait_for_completion: true
-      wait_for_downstream: false
-      waiter_delay: 30
-      waiter_max_attempts: 40
+      db_identifier: test-database
       dependencies:
       - stop_db_instance
     delete_db_instance:
       operator: airflow.providers.amazon.aws.operators.rds.RdsDeleteDbInstanceOperator
-      aws_conn_id: aws_default
+      task_id: delete_db_instance
       db_instance_identifier: test-database
-      deferrable: false
-      outlets: []
-      priority_weight: 1
       rds_kwargs:
         SkipFinalSnapshot: true
-      retries: 0
-      retry_delay:
-        __type__: datetime.timedelta
-        seconds: 300.0
-      retry_exponential_backoff: false
-      start_date:
-        __type__: datetime.datetime
-        year: 2026
-        month: 1
-        day: 1
-      task_id: delete_db_instance
       trigger_rule: all_done
-      wait_for_completion: true
-      wait_for_downstream: false
-      waiter_delay: 30
-      waiter_max_attempts: 60
       dependencies:
       - start_db_instance
   catchup: false
   dag_display_name: example_rds_instance
-  owner_links: {}
   start_date:
-    __type__: datetime.datetime
-    year: 2026
-    month: 1
-    day: 1
+    __type__: pendulum.naive
+    __args__:
+    - 2026
+    - 1
+    - 1
+    - 0
+    - 0
+    - 0
+    - 0
+    fold: 0
   tags: []

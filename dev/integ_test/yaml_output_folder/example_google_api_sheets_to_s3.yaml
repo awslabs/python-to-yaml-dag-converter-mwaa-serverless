@@ -1,0 +1,56 @@
+example_google_api_sheets_to_s3:
+  dag_id: example_google_api_sheets_to_s3
+  params: {}
+  default_args:
+    start_date:
+      __type__: pendulum.naive
+      __args__:
+      - 2026
+      - 1
+      - 1
+      - 0
+      - 0
+      - 0
+      - 0
+      fold: 0
+  schedule: '@once'
+  tasks:
+    create_s3_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      task_id: create_s3_bucket
+      bucket_name: test-google-api-sheets
+      dependencies: []
+    google_sheet_data_to_s3:
+      operator: airflow.providers.amazon.aws.transfers.google_api_to_s3.GoogleApiToS3Operator
+      task_id: google_sheet_data_to_s3
+      google_api_service_name: sheets
+      google_api_service_version: v4
+      google_api_endpoint_path: sheets.spreadsheets.values.get
+      google_api_endpoint_params:
+        spreadsheetId: test-google-sheet-id
+        range: test-google-sheet-range
+      s3_destination_key: s3://test-google-api-sheets/test-google-api-key
+      dependencies:
+      - create_s3_bucket
+    delete_s3_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
+      task_id: delete_s3_bucket
+      bucket_name: test-google-api-sheets
+      force_delete: true
+      trigger_rule: all_done
+      dependencies:
+      - google_sheet_data_to_s3
+  catchup: false
+  dag_display_name: example_google_api_sheets_to_s3
+  start_date:
+    __type__: pendulum.naive
+    __args__:
+    - 2026
+    - 1
+    - 1
+    - 0
+    - 0
+    - 0
+    - 0
+    fold: 0
+  tags: []

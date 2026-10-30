@@ -3,88 +3,71 @@ bash_only_dag:
   params: {}
   default_args:
     owner: airflow
-    start_date: '2026-01-01'
+    start_date:
+      __type__: pendulum.naive
+      __args__:
+      - 2026
+      - 1
+      - 1
+      - 0
+      - 0
+      - 0
+      - 0
+      fold: 0
     retries: 1
-    retry_delay: 300.0
-  schedule: 0 0 * * ? *
+    retry_delay:
+      __type__: datetime.timedelta
+      seconds: 300.0
+  schedule: '@daily'
   tasks:
     create_workspace:
       operator: airflow.providers.standard.operators.bash.BashOperator
-      bash_command: mkdir -p /tmp/bash_workflow && echo "Workspace created"
-      outlets: []
-      params: {}
-      priority_weight: 1
-      retries: 1
-      retry_delay: 300.0
-      retry_exponential_backoff: false
       task_id: create_workspace
-      trigger_rule: all_success
-      wait_for_downstream: false
+      bash_command: mkdir -p /tmp/bash_workflow && echo "Workspace created"
       dependencies: []
     download_data:
       operator: airflow.providers.standard.operators.bash.BashOperator
+      task_id: download_data
       bash_command: echo "sample,data,file" > /tmp/bash_workflow/data.csv && echo
         "Data downloaded"
-      outlets: []
-      params: {}
-      priority_weight: 1
-      retries: 1
-      retry_delay: 300.0
-      retry_exponential_backoff: false
-      task_id: download_data
-      trigger_rule: all_success
-      wait_for_downstream: false
-      dependencies: [create_workspace]
+      dependencies:
+      - create_workspace
     process_data:
       operator: airflow.providers.standard.operators.bash.BashOperator
-      bash_command: wc -l /tmp/bash_workflow/data.csv > /tmp/bash_workflow/line_count.txt
-      outlets: []
-      params: {}
-      priority_weight: 1
-      retries: 1
-      retry_delay: 300.0
-      retry_exponential_backoff: false
       task_id: process_data
-      trigger_rule: all_success
-      wait_for_downstream: false
-      dependencies: [download_data]
+      bash_command: wc -l /tmp/bash_workflow/data.csv > /tmp/bash_workflow/line_count.txt
+      dependencies:
+      - download_data
     generate_report:
       operator: airflow.providers.standard.operators.bash.BashOperator
-      bash_command: echo "Processing completed at $(date)" > /tmp/bash_workflow/report.txt
-      outlets: []
-      params: {}
-      priority_weight: 1
-      retries: 1
-      retry_delay: 300.0
-      retry_exponential_backoff: false
       task_id: generate_report
-      trigger_rule: all_success
-      wait_for_downstream: false
-      dependencies: [process_data]
+      bash_command: echo "Processing completed at $(date)" > /tmp/bash_workflow/report.txt
+      dependencies:
+      - process_data
     archive_results:
       operator: airflow.providers.standard.operators.bash.BashOperator
-      bash_command: tar -czf /tmp/bash_workflow_results.tar.gz -C /tmp bash_workflow/
-      outlets: []
-      params: {}
-      priority_weight: 1
-      retries: 1
-      retry_delay: 300.0
-      retry_exponential_backoff: false
       task_id: archive_results
-      trigger_rule: all_success
-      wait_for_downstream: false
-      dependencies: [generate_report]
+      bash_command: tar -czf /tmp/bash_workflow_results.tar.gz -C /tmp bash_workflow/
+      dependencies:
+      - generate_report
     cleanup_workspace:
       operator: airflow.providers.standard.operators.bash.BashOperator
-      bash_command: rm -rf /tmp/bash_workflow && echo "Workspace cleaned"
-      outlets: []
-      params: {}
-      priority_weight: 1
-      retries: 1
-      retry_delay: 300.0
-      retry_exponential_backoff: false
       task_id: cleanup_workspace
-      trigger_rule: all_success
-      wait_for_downstream: false
-      dependencies: [archive_results]
+      bash_command: rm -rf /tmp/bash_workflow && echo "Workspace cleaned"
+      dependencies:
+      - archive_results
+  catchup: false
+  dag_display_name: bash_only_dag
   description: A sample DAG with only Bash operators
+  start_date:
+    __type__: pendulum.naive
+    __args__:
+    - 2026
+    - 1
+    - 1
+    - 0
+    - 0
+    - 0
+    - 0
+    fold: 0
+  tags: []

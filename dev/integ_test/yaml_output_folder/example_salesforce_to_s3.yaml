@@ -1,0 +1,54 @@
+example_salesforce_to_s3:
+  dag_id: example_salesforce_to_s3
+  params: {}
+  default_args:
+    start_date:
+      __type__: pendulum.naive
+      __args__:
+      - 2026
+      - 1
+      - 1
+      - 0
+      - 0
+      - 0
+      - 0
+      fold: 0
+  schedule: '@once'
+  tasks:
+    create_s3_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3CreateBucketOperator
+      task_id: create_s3_bucket
+      bucket_name: test-salesforce-to-s3-bucket
+      dependencies: []
+    upload_salesforce_to_s3:
+      operator: airflow.providers.amazon.aws.transfers.salesforce_to_s3.SalesforceToS3Operator
+      task_id: upload_salesforce_to_s3
+      salesforce_query: SELECT AccountNumber, Name FROM Account
+      s3_bucket_name: test-salesforce-to-s3-bucket
+      s3_key: test-salesforce-to-s3-key
+      salesforce_conn_id: salesforce
+      replace: true
+      dependencies:
+      - create_s3_bucket
+    delete_s3_bucket:
+      operator: airflow.providers.amazon.aws.operators.s3.S3DeleteBucketOperator
+      task_id: delete_s3_bucket
+      bucket_name: test-salesforce-to-s3-bucket
+      force_delete: true
+      trigger_rule: all_done
+      dependencies:
+      - upload_salesforce_to_s3
+  catchup: false
+  dag_display_name: example_salesforce_to_s3
+  start_date:
+    __type__: pendulum.naive
+    __args__:
+    - 2026
+    - 1
+    - 1
+    - 0
+    - 0
+    - 0
+    - 0
+    fold: 0
+  tags: []
