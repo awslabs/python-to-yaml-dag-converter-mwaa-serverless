@@ -1,10 +1,16 @@
+import functools
 import unittest
 from unittest.mock import Mock, patch
 
 from airflow.providers.standard.decorators.python import _PythonDecoratedOperator
 from airflow.sdk.definitions.mappedoperator import MappedOperator
 
-from dag_converter.conversion.tasks import convert_tasks, get_operator_parameters, operator_accepts_var_kwargs
+from dag_converter.conversion.tasks import (
+    convert_tasks,
+    get_operator_parameters,
+    is_importable_callable,
+    operator_accepts_var_kwargs,
+)
 
 
 class TestConvertTasks(unittest.TestCase):
@@ -277,6 +283,33 @@ class TestConvertTasks(unittest.TestCase):
         self.assertNotIn("partial_kwargs", result["test_task"])
         # Regular param should be included
         self.assertIn("param1", result["test_task"])
+
+
+def module_level_function():
+    pass
+
+
+class TestIsImportableCallable(unittest.TestCase):
+    def test_module_level_function(self):
+        """Test module-level functions can be imported"""
+        self.assertTrue(is_importable_callable(module_level_function))
+        self.assertTrue(is_importable_callable(functools.reduce))
+
+    def test_not_importable_callables(self):
+        """Test lambdas, nested functions, methods and partials cannot be imported"""
+
+        def nested():
+            pass
+
+        class Callables:
+            def method(self):
+                pass
+
+        self.assertFalse(is_importable_callable(lambda: 1))
+        self.assertFalse(is_importable_callable(nested))
+        self.assertFalse(is_importable_callable(Callables().method))
+        self.assertFalse(is_importable_callable(functools.partial(module_level_function)))
+        self.assertFalse(is_importable_callable(None))
 
 
 class TestOperatorAcceptsVarKwargs(unittest.TestCase):

@@ -1,5 +1,6 @@
 import importlib
 import inspect
+import sys
 from pathlib import Path
 
 from airflow.models.dag import DAG
@@ -63,9 +64,13 @@ def convert_tasks(
         else:
             full_operator_name = f"{get_module_name(task.__module__)}.{task.task_type}"
 
-        if isinstance(task, PythonOperator) and inspect.ismethod(getattr(task, "python_callable", None)):
+        if (
+            isinstance(task, PythonOperator)
+            and not isinstance(task, _PythonDecoratedOperator)
+            and not is_importable_callable(getattr(task, "python_callable", None))
+        ):
             raise InvalidOperatorError(
-                f"Operator {task.task_type} is not supported, it sets python_callable to one of its own methods"
+                f"Operator {task.task_type} is not supported, python_callable must be a module-level function"
             )
 
         tasks[task_id] = {"operator": full_operator_name}
@@ -147,6 +152,15 @@ def convert_tasks(
                 del tasks[task_id]["failure_states"]
 
     return tasks
+
+
+def is_importable_callable(func) -> bool:
+    """
+    Returns whether the callable can be imported as <module>.<name>, which DagFactory requires
+    for python_callable. Lambdas, nested functions, methods and functools.partial cannot be.
+    """
+    module = sys.modules.get(getattr(func, "__module__", None))
+    return module is not None and getattr(module, getattr(func, "__name__", ""), None) is func
 
 
 def operator_accepts_var_kwargs(operator_class: type[Operator]) -> bool:
