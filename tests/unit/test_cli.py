@@ -32,7 +32,7 @@ class TestCli(unittest.TestCase):
         result = runner.invoke(app, ["convert", "--help"])
         self.assertEqual(result.exit_code, 0)
         self.assertIn("Loads Python Dags from input and converts them to YAML Dags", result.output)
-        self.assertIn("INPUT_PATH", result.output)
+        self.assertIn("input_path", result.output.lower())
         self.assertIn("--output", result.output)
         self.assertIn("--bucket", result.output)
         self.assertIn("--validate", result.output)

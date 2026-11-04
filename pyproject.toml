@@ -61,8 +61,19 @@ path = "dag_converter/__init__.py"
 
 ## Integ Tests
 [tool.hatch.envs.dev]
+installer = "uv"
 dependencies = [
-    "opensearch-py==3.0.0"
+    "opensearch-py==3.0.0",
+    # Providers used by the integ test Dags
+    "apache-airflow-providers-apache-hive==9.7.1",
+    "apache-airflow-providers-ftp==3.16.1",
+    "apache-airflow-providers-google==22.8.0",
+    "apache-airflow-providers-imap==3.13.1",
+    "apache-airflow-providers-microsoft-azure==15.3.0",
+    "apache-airflow-providers-mongo==5.5.1",
+    "apache-airflow-providers-salesforce==5.15.1",
+    "apache-airflow-providers-sftp==7.0.0",
+    "apache-airflow-providers-ssh==7.0.1",
 ]
 
 [tool.hatch.envs.tests]

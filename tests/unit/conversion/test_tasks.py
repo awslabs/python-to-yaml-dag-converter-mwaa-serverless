@@ -116,7 +116,9 @@ class TestConvertTasks(unittest.TestCase):
         for accepts_var_kwargs, expected_extra in [(True, True), (False, False)]:
             mock_accepts_var_kwargs.return_value = accepts_var_kwargs
             with patch("builtins.dir", return_value=["task_id", "task_type"]):
-                result = convert_tasks(self.mock_taskflow_parser, self.mock_dag_object, "my_dag.py", self.mock_validator)
+                result = convert_tasks(
+                    self.mock_taskflow_parser, self.mock_dag_object, "my_dag.py", self.mock_validator
+                )
 
             self.assertEqual(result["greet"]["greeting"], "Hi")
             self.assertEqual("extra" in result["greet"], expected_extra)
