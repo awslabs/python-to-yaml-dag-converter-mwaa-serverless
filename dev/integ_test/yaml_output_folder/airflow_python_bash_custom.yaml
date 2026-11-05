@@ -1,0 +1,104 @@
+airflow_python_bash_custom:
+  dag_id: airflow_python_bash_custom
+  params: {}
+  default_args: {}
+  schedule: '@daily'
+  tasks:
+    py:
+      operator: airflow.providers.standard.operators.python.PythonOperator
+      op_args: []
+      op_kwargs:
+        who: world
+      outlets: []
+      priority_weight: 1
+      python_callable: airflow_python_bash_custom.say_hello
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2024
+        month: 1
+        day: 1
+      task_id: py
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies: []
+    bash:
+      operator: airflow.providers.standard.operators.bash.BashOperator
+      bash_command: echo hi
+      outlets: []
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2024
+        month: 1
+        day: 1
+      task_id: bash
+      trigger_rule: all_success
+      wait_for_downstream: false
+      env:
+        A: '1'
+      append_env: true
+      dependencies:
+      - py
+    greet:
+      operator: airflow_python_bash_custom.GreetOperator
+      name: team
+      outlets: []
+      priority_weight: 1
+      retries: 2
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2024
+        month: 1
+        day: 1
+      task_id: greet
+      trigger_rule: all_success
+      wait_for_downstream: false
+      greeting: Hi
+      dependencies:
+      - bash
+    lam:
+      operator: airflow.providers.amazon.aws.operators.lambda_function.LambdaInvokeFunctionOperator
+      aws_conn_id: aws_default
+      function_name: fn
+      keep_empty_log_lines: true
+      outlets: []
+      payload: '{"a": 1}'
+      priority_weight: 1
+      retries: 0
+      retry_delay:
+        __type__: datetime.timedelta
+        seconds: 300.0
+      retry_exponential_backoff: false
+      start_date:
+        __type__: datetime.datetime
+        year: 2024
+        month: 1
+        day: 1
+      task_id: lam
+      trigger_rule: all_success
+      wait_for_downstream: false
+      dependencies:
+      - greet
+  catchup: false
+  dag_display_name: airflow_python_bash_custom
+  owner_links: {}
+  start_date:
+    __type__: datetime.datetime
+    year: 2024
+    month: 1
+    day: 1
+  tags: []

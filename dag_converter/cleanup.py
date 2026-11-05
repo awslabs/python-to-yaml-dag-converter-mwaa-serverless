@@ -51,7 +51,7 @@ def get_cleanup_dag(obj: Any) -> Any:
         return obj.dump()
 
     if isinstance(obj, Enum):
-        return {"__type__": obj.__module__ + "." + obj.__class__.__name__, "__args__": [obj.value]}
+        return {"__type__": get_module_name(obj.__module__) + "." + obj.__class__.__name__, "__args__": [obj.value]}
 
     if isinstance(obj, dict):
         # Handle encoded values
@@ -108,9 +108,18 @@ def get_cleanup_dag(obj: Any) -> Any:
         return f"{input_file_name}.{function_name}"
 
     if hasattr(obj, "__dict__"):  # Handle custom objects
-        return {"__type__": obj.__module__ + "." + obj.__class__.__name__, **get_cleanup_dag(obj.__dict__)}
+        return {
+            "__type__": get_module_name(obj.__module__) + "." + obj.__class__.__name__,
+            **get_cleanup_dag(obj.__dict__),
+        }
 
     return str(obj)
+
+
+def get_module_name(module_name: str) -> str:
+    if module_name.startswith("unusual_prefix_"):
+        return module_name.split("_", 3)[3]
+    return module_name
 
 
 def is_primitive(obj: Any) -> bool:

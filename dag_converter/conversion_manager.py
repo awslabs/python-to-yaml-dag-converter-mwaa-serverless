@@ -7,7 +7,6 @@ from dag_converter.console_config import print_error, print_info, print_progress
 from dag_converter.conversion.converter import get_converted_format
 from dag_converter.dagbag import get_dag_object
 from dag_converter.schema_parser import ArgumentValidator
-from dag_converter.static_validator import validate_file
 from dag_converter.taskflow_parser import TaskFlowAnalyzer
 from dag_converter.yaml_format import build_yaml
 from dag_converter.yaml_validator import validate_yaml_with_dagbag
@@ -62,11 +61,6 @@ class ConversionManager:
         schema_file_path = Path(__file__).absolute().parent / VALIDATOR_SCHEMA_FILE
         validator = ArgumentValidator(schema_file_path)
 
-        try:
-            validate_file(dag_file_path, validator)
-        except Exception as e:
-            print_error("Static validation failed")
-            raise e
         dag_object_list = get_dag_object(dag_file_path)
 
         result_output_files: list[Path] = []

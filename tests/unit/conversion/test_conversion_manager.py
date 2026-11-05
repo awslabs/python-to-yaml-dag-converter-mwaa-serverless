@@ -39,14 +39,12 @@ class TestConversionManager(unittest.TestCase):
     @patch("dag_converter.conversion_manager.get_converted_format")
     @patch("dag_converter.conversion_manager.get_cleanup_dag")
     @patch("dag_converter.conversion_manager.build_yaml")
-    @patch("dag_converter.conversion_manager.validate_file")
     @patch("dag_converter.conversion_manager.ArgumentValidator")
     @patch("dag_converter.conversion_manager.TaskFlowAnalyzer")
     def test_single_file_conversion_success(
         self,
         mock_taskflow,
         mock_validator_class,
-        mock_validate_file,
         mock_build_yaml,
         mock_cleanup,
         mock_convert,
@@ -63,7 +61,6 @@ class TestConversionManager(unittest.TestCase):
         mock_validator = Mock()
         mock_validator_class.return_value = mock_validator
 
-        mock_validate_file.side_effect = lambda x, y: None
 
         mock_convert.return_value = {"sample_dag": {"dag_id": "sample_dag"}}
         mock_cleanup.return_value = {"sample_dag": {"dag_id": "sample_dag"}}
@@ -78,7 +75,6 @@ class TestConversionManager(unittest.TestCase):
         )
 
         # Verify the conversion process was called
-        mock_validate_file.assert_called_once()
         mock_get_dag.assert_called_once()
         mock_convert.assert_called_once()
         mock_cleanup.assert_called_once()
@@ -97,14 +93,12 @@ class TestConversionManager(unittest.TestCase):
     @patch("dag_converter.conversion_manager.get_converted_format")
     @patch("dag_converter.conversion_manager.get_cleanup_dag")
     @patch("dag_converter.conversion_manager.build_yaml")
-    @patch("dag_converter.conversion_manager.validate_file")
     @patch("dag_converter.conversion_manager.ArgumentValidator")
     @patch("dag_converter.conversion_manager.TaskFlowAnalyzer")
     def test_batch_conversion_success(
         self,
         mock_taskflow,
         mock_validator_class,
-        mock_validate_file,
         mock_build_yaml,
         mock_cleanup,
         mock_convert,
@@ -162,7 +156,6 @@ class TestConversionManager(unittest.TestCase):
         )
 
         # Verify both files were processed
-        self.assertEqual(mock_validate_file.call_count, 2)
         self.assertEqual(mock_get_dag.call_count, 2)
         self.assertEqual(mock_convert.call_count, 2)
 
@@ -210,14 +203,12 @@ class TestConversionManager(unittest.TestCase):
     @patch("dag_converter.conversion_manager.get_converted_format")
     @patch("dag_converter.conversion_manager.get_cleanup_dag")
     @patch("dag_converter.conversion_manager.build_yaml")
-    @patch("dag_converter.conversion_manager.validate_file")
     @patch("dag_converter.conversion_manager.ArgumentValidator")
     @patch("dag_converter.conversion_manager.TaskFlowAnalyzer")
     def test_s3_upload_success(
         self,
         mock_taskflow,
         mock_validator_class,
-        mock_validate_file,
         mock_build_yaml,
         mock_cleanup,
         mock_convert,
@@ -263,14 +254,12 @@ class TestConversionManager(unittest.TestCase):
     @patch("dag_converter.conversion_manager.get_converted_format")
     @patch("dag_converter.conversion_manager.get_cleanup_dag")
     @patch("dag_converter.conversion_manager.build_yaml")
-    @patch("dag_converter.conversion_manager.validate_file")
     @patch("dag_converter.conversion_manager.ArgumentValidator")
     @patch("dag_converter.conversion_manager.TaskFlowAnalyzer")
     def test_multiple_dags_in_single_file(
         self,
         mock_taskflow,
         mock_validator_class,
-        mock_validate_yaml_with_dagbag,
         mock_build_yaml,
         mock_cleanup,
         mock_convert,
@@ -291,8 +280,6 @@ class TestConversionManager(unittest.TestCase):
 
         mock_validator = Mock()
         mock_validator_class.return_value = mock_validator
-
-        mock_validate_yaml_with_dagbag.return_value = True
 
         # Mock conversion results for each DAG
         def mock_convert_side_effect(*args):
