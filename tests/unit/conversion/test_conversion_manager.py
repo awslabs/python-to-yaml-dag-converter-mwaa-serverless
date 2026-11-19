@@ -1,7 +1,9 @@
+import os
 import shutil
 import sys
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -60,7 +62,6 @@ class TestConversionManager(unittest.TestCase):
 
         mock_validator = Mock()
         mock_validator_class.return_value = mock_validator
-
 
         mock_convert.return_value = {"sample_dag": {"dag_id": "sample_dag"}}
         mock_cleanup.return_value = {"sample_dag": {"dag_id": "sample_dag"}}
@@ -321,6 +322,167 @@ class TestConversionManager(unittest.TestCase):
         with open(output_file2) as f:
             content2 = f.read()
             self.assertEqual(content2, "dag_id: dag_2\n")
+
+
+class TestConversionManagerPackage(unittest.TestCase):
+    """Real conversions with code packages and validation (third-party packages are not installed)"""
+
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.root = Path(self.temp_dir.name) / "dags"
+        (self.root / "helpers_cm").mkdir(parents=True)
+        (self.root / "helpers_cm" / "__init__.py").write_text("")
+        (self.root / "helpers_cm" / "mod.py").write_text("def func():\n    return 1\n")
+        self.output = Path(self.temp_dir.name) / "out"
+        self.old_sys_path = list(sys.path)
+        self.old_cwd = os.getcwd()
+        os.chdir(self.temp_dir.name)  # the project root, so ./dags is the Dag folder
+
+    def tearDown(self):
+        os.chdir(self.old_cwd)
+        for name in [n for n in sys.modules if n.startswith("helpers_cm")]:
+            del sys.modules[name]
+        self.temp_dir.cleanup()
+
+    def convert(self, path):
+        with patch("dag_converter.code_package.third_party_distributions", return_value={}):
+            ConversionManager(s3_bucket=None).start_conversion_process(
+                dag_file_path=path, output_dir=self.output, user_validate=True
+            )
+
+    def test_multiple_dags_in_one_file_validate(self):
+        (self.root / "two_cm.py").write_text(
+            "from datetime import datetime\n"
+            "from airflow import DAG\n"
+            "from airflow.providers.standard.operators.python import PythonOperator\n"
+            "from helpers_cm.mod import func\n"
+            "for i in (1, 2):\n"
+            "    with DAG(f'cm_d{i}', start_date=datetime(2024, 1, 1), schedule=None) as dag:\n"
+            "        PythonOperator(task_id='t', python_callable=func)\n"
+            "    globals()[f'dag{i}'] = dag\n"
+        )
+        self.convert(self.root)
+        for dag_id in ("cm_d1", "cm_d2"):
+            self.assertIn("python_callable: helpers_cm.mod.func", (self.output / f"{dag_id}.yaml").read_text())
+            names = zipfile.ZipFile(self.output / f"{dag_id}.zip").namelist()
+            self.assertEqual(sorted(names), ["helpers_cm/__init__.py", "helpers_cm/mod.py"])
+        self.assertNotIn("helpers_cm.mod", sys.modules)
+
+    def test_no_code_package_needed(self):
+        (self.root / "plain_cm.py").write_text(
+            "from datetime import datetime\n"
+            "from airflow import DAG\n"
+            "from airflow.providers.standard.operators.bash import BashOperator\n"
+            "with DAG('plain_cm', start_date=datetime(2024, 1, 1), schedule=None) as dag:\n"
+            "    BashOperator(task_id='t', bash_command='echo hi')\n"
+        )
+        self.output.mkdir()
+        (self.output / "plain_cm.zip").write_bytes(b"stale")
+        with (
+            patch("dag_converter.code_package.stage_distributions") as stage,
+            patch("dag_converter.code_package.print_info") as info,
+            patch("dag_converter.conversion_manager.print_success") as success,
+            patch("dag_converter.conversion_manager.validate_yaml_with_dagbag", return_value=(True, "")) as validate,
+        ):
+            self.convert(self.root / "plain_cm.py")
+        stage.assert_not_called()
+        self.assertFalse((self.output / "plain_cm.zip").exists())
+        self.assertIn("No code package needed for plain_cm", [c.args[0] for c in info.call_args_list])
+        self.assertIsNone(validate.call_args.kwargs["import_path"])
+        self.assertIn("YAML validation successful, no errors found", [c.args[0] for c in success.call_args_list])
+        self.assertIn("bash_command: echo hi", (self.output / "plain_cm.yaml").read_text())
+
+    def test_local_helper_gets_a_code_package(self):
+        (self.root / "helper_cm.py").write_text(
+            "from datetime import datetime\n"
+            "from airflow import DAG\n"
+            "from airflow.providers.standard.operators.python import PythonOperator\n"
+            "from helpers_cm.mod import func\n"
+            "with DAG('helper_cm', start_date=datetime(2024, 1, 1), schedule=None) as dag:\n"
+            "    PythonOperator(task_id='t', python_callable=func)\n"
+        )
+        self.convert(self.root / "helper_cm.py")
+        names = zipfile.ZipFile(self.output / "helper_cm.zip").namelist()
+        self.assertEqual(sorted(names), ["helpers_cm/__init__.py", "helpers_cm/mod.py"])
+        # The Dag folder is only on the import path during the conversion
+        self.assertEqual(sys.path, self.old_sys_path)
+
+    def test_script_path_is_packaged_and_rewritten(self):
+        (self.root / "scripts").mkdir()
+        (self.root / "scripts" / "run.sh").write_text("echo hi\n")
+        (self.root / "script_cm.py").write_text(
+            "from datetime import datetime\n"
+            "from pathlib import Path\n"
+            "from airflow import DAG\n"
+            "from airflow.providers.standard.operators.bash import BashOperator\n"
+            "with DAG('script_cm', start_date=datetime(2024, 1, 1), schedule=None) as dag:\n"
+            "    BashOperator(task_id='t', bash_command=f'bash {Path(__file__).parent}/scripts/run.sh ')\n"
+        )
+        self.convert(Path("dags") / "script_cm.py")  # relative to the project root
+        self.assertIn(
+            "bash_command: 'bash /usr/local/airflow/dags/scripts/run.sh '", (self.output / "script_cm.yaml").read_text()
+        )
+        self.assertEqual(zipfile.ZipFile(self.output / "script_cm.zip").namelist(), ["scripts/run.sh"])
+
+    def test_config_file_read_while_parsing_is_packaged(self):
+        (self.root / "configs").mkdir()
+        (self.root / "configs" / "names.txt").write_text("a\nb\n")
+        (self.root / "config_cm.py").write_text(
+            "from datetime import datetime\n"
+            "from pathlib import Path\n"
+            "from airflow import DAG\n"
+            "from airflow.providers.standard.operators.python import PythonOperator\n"
+            "NAMES = (Path(__file__).parent / 'configs' / 'names.txt').read_text().split()\n"
+            "def hello():\n"
+            "    return 1\n"
+            "for name in NAMES:\n"
+            "    with DAG(f'config_cm_{name}', start_date=datetime(2024, 1, 1), schedule=None) as dag:\n"
+            "        PythonOperator(task_id='t', python_callable=hello)\n"
+            "    globals()[name] = dag\n"
+        )
+        # The callable imports the Dag file from the zip at task time, which reads the config again
+        self.convert(self.root / "config_cm.py")
+        for name in ("a", "b"):
+            names = zipfile.ZipFile(self.output / f"config_cm_{name}.zip").namelist()
+            self.assertEqual(sorted(names), ["config_cm.py", "configs/names.txt"])
+
+    @patch("dag_converter.conversion_manager.boto3")
+    def test_bucket_upload_includes_code_package(self, mock_boto3):
+        (self.root / "upload_cm.py").write_text(
+            "from datetime import datetime\n"
+            "from airflow import DAG\n"
+            "from airflow.providers.standard.operators.python import PythonOperator\n"
+            "from helpers_cm.mod import func\n"
+            "with DAG('upload_cm', start_date=datetime(2024, 1, 1), schedule=None) as dag:\n"
+            "    PythonOperator(task_id='t', python_callable=func)\n"
+        )
+        with patch("dag_converter.code_package.third_party_distributions", return_value={}):
+            ConversionManager(s3_bucket="bucket").start_conversion_process(
+                dag_file_path=self.root / "upload_cm.py", output_dir=self.output, user_validate=False
+            )
+        uploads = [c.args for c in mock_boto3.client.return_value.upload_file.call_args_list]
+        self.assertEqual(
+            uploads,
+            [
+                (self.output / "upload_cm.yaml", "bucket", "upload_cm.yaml"),
+                (self.output / "upload_cm.zip", "bucket", "upload_cm.zip"),
+            ],
+        )
+
+    def test_subfolder_dag_callable(self):
+        (self.root / "sub").mkdir()
+        (self.root / "sub" / "sub_cm.py").write_text(
+            "from datetime import datetime\n"
+            "from airflow import DAG\n"
+            "from airflow.providers.standard.operators.python import PythonOperator\n"
+            "def hello():\n"
+            "    return 1\n"
+            "with DAG('sub_cm', start_date=datetime(2024, 1, 1), schedule=None) as dag:\n"
+            "    PythonOperator(task_id='t', python_callable=hello)\n"
+        )
+        self.convert(self.root / "sub" / "sub_cm.py")
+        self.assertIn("python_callable: sub.sub_cm.hello", (self.output / "sub_cm.yaml").read_text())
+        self.assertEqual(zipfile.ZipFile(self.output / "sub_cm.zip").namelist(), ["sub/sub_cm.py"])
 
 
 if __name__ == "__main__":

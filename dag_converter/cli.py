@@ -66,6 +66,10 @@ def convert(
             "conversion environment. Needs the airflow extra installed",
         ),
     ] = False,
+    include: Annotated[
+        list[str] | None,
+        typer.Option(help="Glob, relative to the Dag folder, of extra files to add to the code package (repeatable)"),
+    ] = None,
 ):
     """
     Loads Python Dags from input and converts them to YAML Dags.
@@ -94,7 +98,7 @@ def convert(
 
     from dag_converter.conversion_manager import ConversionManager
 
-    conversion_manager = ConversionManager(s3_bucket=bucket)
+    conversion_manager = ConversionManager(s3_bucket=bucket, includes=include or [])
     conversion_manager.start_conversion_process(
         dag_file_path=input_path, output_dir=output, user_validate=validate, debug=debug
     )

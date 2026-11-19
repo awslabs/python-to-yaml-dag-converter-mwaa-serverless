@@ -45,11 +45,12 @@ Review the converted Dags in the `output_yaml` folder in the current directory
 ## Options
 * `--help` Show help message and exit
 * `--output`: PATH Path to output converted YAML Dag(s) to [default: output_yaml]
-* `--bucket`: TEXT S3 bucket to upload converted Dags to. Uses local AWS credentials
+* `--bucket`: TEXT S3 bucket to upload converted Dags and their code packages to. Uses local AWS credentials
 * `--validate/--no-validate`: Validate the output YAML using DagFactory
 * `--debug/--no-debug` Enable logging DagBag objects to .initial_task_attributes before and after conversion
 * `--requirements`: FILE requirements.txt with extra packages your Dags import. The conversion environment comes with Python 3.12 and apache-airflow==3.0.6, apache-airflow-providers-amazon==9.30.0, dag-factory==1.0.0, boto3==1.43.1, botocore==1.43.1
 * `--skip-mwaa-serverless-managed-env`: Parse Dags with the packages in your current Python environment instead of the isolated conversion environment. Needs the `airflow` extra installed. `--requirements` is ignored
+* `--include`: TEXT Glob, relative to the Dag folder, of extra files to add to the code package (repeatable)
 
 ## Conversion environment
 `dag-converter convert` parses your Dags in an isolated environment that matches MWAA Serverless: Python 3.12,
@@ -65,6 +66,24 @@ version is used instead and a warning is shown.
   if set, `%LOCALAPPDATA%\dag-converter` on Windows). A changed requirements file, including files it includes with
   `-r`, gets a new environment. Cleanup is automatic: unused environments are pruned once a week.
 * `dag-converter cache info` shows the cache location and size; `dag-converter cache clean` deletes it.
+
+## Code package
+MWAA Serverless extracts a workflow's code zip to `/usr/local/airflow/dags`, which is on the import path. When a Dag
+needs files beyond its YAML, the converter writes `<dag_id>.zip` next to `<dag_id>.yaml`:
+
+* The Dag folder is `./dags` if it contains the input, otherwise the input's folder (a file's parent). Files are
+  stored relative to it, and it is on the import path while converting, as on the service.
+* Local modules the Dag imports (while parsing or inside its callables), their parent `__init__.py` files, other
+  files read while parsing (e.g. a config file the Dags are generated from), and files and folders the YAML refers
+  to are included. Files in virtualenvs and likely secrets (`.env`, `*.pem`,
+  `*.key`, `profiles.yml`) are left out; add files the converter cannot find, or secrets you need, with `--include`.
+* Third-party packages that are not pre-installed on the service are bundled at the zip root with their
+  dependencies, at the versions used for conversion, as Linux x86_64 / Python 3.12 wheels. Packages without such a
+  wheel cannot be bundled. Wheels are cached in the conversion cache.
+* Paths under the Dag folder in the YAML are rewritten to `/usr/local/airflow/dags/...`; other local paths are
+  reported as warnings.
+* With `--validate`, the YAML is validated against the extracted zip instead of the Dag folder.
+* The service rejects code packages over 250 MB uncompressed; larger packages are written with a warning.
 
 ## Limitations
 * Behavior that is not supported in `dag-factory` will not be converted
